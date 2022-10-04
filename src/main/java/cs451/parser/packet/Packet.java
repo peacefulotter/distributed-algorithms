@@ -23,13 +23,13 @@ abstract public class Packet
         this.seqNr = wrapped.getInt( seqNrIndex );
     }
 
-    protected DatagramPacket toDatagramPacket( String msg )
+    public DatagramPacket getDatagram()
     {
-        byte[] bytes = msg.getBytes( StandardCharsets.UTF_8 );
+        byte[] bytes = getMsg().getBytes( StandardCharsets.UTF_8 );
         return new DatagramPacket(bytes, bytes.length);
     }
 
-    abstract public DatagramPacket getDatagram();
+    abstract public String getMsg();
 
     public char getTag()
     {

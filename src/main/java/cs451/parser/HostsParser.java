@@ -5,21 +5,20 @@ import cs451.Host;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class HostsParser<T extends Host> {
+public class HostsParser {
 
     private static final String HOSTS_KEY = "--hosts";
     private static final String SPACES_REGEX = "\\s+";
 
     private String filename;
-    private List<T> hosts = new ArrayList<>();
+    private List<Host> hosts = new ArrayList<>();
 
-    public boolean populate(Class<T> clazz, String key, String filename) {
+    public boolean populate(String key, String filename) {
         if (!key.equals(HOSTS_KEY)) {
             return false;
         }
@@ -38,19 +37,15 @@ public class HostsParser<T extends Host> {
                     return false;
                 }
 
-                T newHost = clazz.getDeclaredConstructor().newInstance(  );
-                if (!newHost.populate(splits[0], splits[1], splits[2])) {
+                Host host = new Host();
+                if (!host.populate(splits[0], splits[1], splits[2])) {
                     return false;
                 }
-
-                hosts.add(newHost);
+                hosts.add(host);
             }
         } catch (IOException e) {
             System.err.println("Problem with the hosts file!");
             return false;
-        } catch ( InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e )
-        {
-            throw new RuntimeException( e );
         }
 
         if (!checkIdRange()) {
@@ -79,7 +74,7 @@ public class HostsParser<T extends Host> {
         return id <= hosts.size();
     }
 
-    public List<T> getHosts() {
+    public List<Host> getHosts() {
         return hosts;
     }
 

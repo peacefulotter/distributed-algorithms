@@ -21,9 +21,9 @@ public class DeliveryPacket extends Packet
     }
 
     @Override
-    public DatagramPacket getDatagram()
+    public String getMsg()
     {
-        return toDatagramPacket(tag + " " + sender + " " + this.seqNr);
+        return tag + " " + sender + " " + this.seqNr;
     }
 
     public int getSender()

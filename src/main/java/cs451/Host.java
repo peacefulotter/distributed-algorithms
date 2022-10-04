@@ -1,6 +1,7 @@
 package cs451;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 public class Host {
@@ -52,5 +53,13 @@ public class Host {
     public int getPort() {
         return port;
     }
+
+    @Override
+    public String toString()
+    {
+        return "(" + id + ") - " + ip + ":" + port + " ";
+    }
+
+    public InetSocketAddress getAddress() { return new InetSocketAddress( ip, port ); }
 
 }

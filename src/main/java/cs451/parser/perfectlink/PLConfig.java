@@ -1,19 +1,17 @@
 package cs451.parser.perfectlink;
 
-import cs451.parser.ConfigParser;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-public class PLConfigParser extends ConfigParser
+public class PLConfig
 {
-    private int m, i;
+    private final int m, i;
 
-    public void read()
+    public PLConfig( String path )
     {
-        try ( InputStream stream = new FileInputStream( getPath() ) )
+        try ( InputStream stream = new FileInputStream( path ) )
         {
             String content = new String( stream.readAllBytes(), StandardCharsets.UTF_8 );
             String[] split = content.split( " " );

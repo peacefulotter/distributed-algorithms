@@ -15,8 +15,8 @@ public class BroadcastPacket extends Packet
     }
 
     @Override
-    public DatagramPacket getDatagram()
+    public String getMsg()
     {
-        return toDatagramPacket(tag + " " + this.seqNr );
+        return tag + " " + this.seqNr;
     }
 }

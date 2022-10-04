@@ -1,33 +1,28 @@
 package cs451.parser;
 
 import cs451.Constants;
-import cs451.Host;
-import cs451.parser.perfectlink.PLConfigParser;
-import cs451.parser.perfectlink.PLHost;
-
-import java.util.List;
 
 public class Parser {
 
     private String[] args;
     private long pid;
     private IdParser idParser;
-    private HostsParser<PLHost> hostsParser;
+    private HostsParser hostsParser;
     private OutputParser outputParser;
-    private PLConfigParser configParser;
+    private ConfigParser configParser;
 
     public Parser(String[] args) {
         this.args = args;
     }
 
-    public List<PLHost> parse()
+    public HostsParser parse()
     {
         pid = ProcessHandle.current().pid();
 
         idParser = new IdParser();
-        hostsParser = new HostsParser<>();
+        hostsParser = new HostsParser();
         outputParser = new OutputParser();
-        configParser = new PLConfigParser();
+        configParser = new ConfigParser();
 
         int argsNum = args.length;
         if ( argsNum != Constants.ARG_LIMIT_CONFIG )
@@ -40,7 +35,7 @@ public class Parser {
             help( "idParser" );
         }
 
-        if ( !hostsParser.populate( PLHost.class, args[Constants.HOSTS_KEY], args[Constants.HOSTS_VALUE] ) )
+        if ( !hostsParser.populate( args[Constants.HOSTS_KEY], args[Constants.HOSTS_VALUE] ) )
         {
             help( "hostsParser - populate" );
         }
@@ -60,11 +55,7 @@ public class Parser {
             help( "configParser - populate" );
         }
 
-        configParser.read();
-        System.out.println("[CONFIG] m: " + configParser.getM() + ", i: " + configParser.getI());
-        List<PLHost> hosts = hostsParser.getHosts();
-        hosts.forEach( h -> h.setParams( configParser.getM(), configParser.getI() ));
-        return hosts;
+        return hostsParser;
     }
 
     private void help(String msg) {
@@ -84,5 +75,4 @@ public class Parser {
     public String config() {
         return configParser.getPath();
     }
-
 }

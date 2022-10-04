@@ -1,40 +1,48 @@
 package cs451.parser.perfectlink;
 
 import cs451.Host;
-import cs451.parser.packet.BroadcastPacket;
-import cs451.parser.packet.DeliveryPacket;
-import cs451.parser.packet.Packet;
+import cs451.parser.packet.PLPacket;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.HashSet;
+import java.util.Set;
 
-public class Server extends Thread
+abstract public class Server extends Thread
 {
-    private final DatagramSocket socket;
-    private final Host host;
+    protected final DatagramSocket socket;
+    protected final FileHandler handler;
+    protected final Host host;
+    protected final Host dest;
 
-    private byte[] buf = new byte[256];
-    private int seqNr;
+    protected final Set<String> delivered;
 
-    public Server( Host host )
+    private final byte[] buf = new byte[256];
+
+    public Server( Host host, Host dest, String output )
     {
         this.host = host;
-        this.seqNr = 1;
+        this.dest = dest;
+        this.delivered = new HashSet<>();
+        this.handler = new FileHandler( output );
 
         try
         {
-            this.socket = new DatagramSocket();
-            this.socket.connect( new InetSocketAddress(host.getIp(), host.getPort()) );
+            this.socket = new DatagramSocket( host.getAddress() );
+            if ( host.getId() != dest.getId() )
+            {
+                System.out.println("Binding " + host + " to " + dest);
+                this.socket.connect( dest.getAddress() );
+            }
         } catch ( SocketException e )
         {
-            System.out.println(e);
             throw new RuntimeException( e );
         }
 
-        System.out.println( getFullName() + "Socket connected" );
+        System.out.println( host + "Socket connected" );
     }
 
-    private DatagramPacket getIncomingPacket()
+    protected DatagramPacket getIncomingPacket()
     {
         DatagramPacket packet = new DatagramPacket(buf, buf.length);
         try { socket.receive(packet); }
@@ -42,7 +50,7 @@ public class Server extends Thread
         return packet;
     }
 
-    private String parsePacket( DatagramPacket packet )
+    protected String parsePacket( DatagramPacket packet )
     {
         InetAddress address = packet.getAddress();
         int port = packet.getPort();
@@ -50,59 +58,39 @@ public class Server extends Thread
         return new String(packet.getData(), 0, packet.getLength());
     }
 
-    private void sendPacket( Packet packet )
+    protected boolean sendPacket( PLPacket packet )
     {
-        try { socket.send(packet.getDatagram()); }
-        catch ( IOException e ) { throw new RuntimeException( e ); }
+        System.out.println(host + "Sending packet: " + packet);
+        try {
+            socket.send( packet.getDatagram() );
+            handler.write( packet.getMsg() );
+        }
+        catch ( IOException e ) {
+            System.out.println( host + e.getMessage() );
+            return false;
+        }
+
+        return true;
     }
 
+
+    abstract protected boolean _run();
+
+    @Override
     public void run()
     {
         boolean running = true;
-        System.out.println(getFullName() + "Socket running...");
+        System.out.println(host + "Socket running...");
 
         while (running)
-        {
-            if ( host.getId() == 0 )
-            {
-                DatagramPacket packet = getIncomingPacket();
-                String msg = parsePacket( packet );
-                System.out.println( getFullName() + "Received from: " + packet.getPort() + ", msg: " + msg );
-                DeliveryPacket deliverPacket = new DeliveryPacket( packet.getData() );
-                System.out.println(deliverPacket);
-            }
-            else if ( seqNr < 10 )
-            {
-                Packet broadcastPacket = getBroadcastPacket();
-                sendPacket( broadcastPacket );
-            }
-            else
-            {
-                System.out.println(getFullName() + " Done transmitting");
-                running = false;
-            }
-        }
+            running = _run();
 
         closeConnection();
     }
 
+
     public void closeConnection() {
-        System.out.println( getFullName() + "Closing connection" );
+        System.out.println( host + "Closing connection" );
         socket.close();
-    }
-
-    private Packet getDeliveryPacket()
-    {
-        return new DeliveryPacket( seqNr++, host.getId() );
-    }
-
-    private Packet getBroadcastPacket()
-    {
-        return new BroadcastPacket( seqNr++ );
-    }
-
-    private String getFullName()
-    {
-        return "[" + host.getIp() + ":" + host.getPort() + "] ";
     }
 }
