@@ -2,20 +2,20 @@ package cs451;
 
 import cs451.parser.HostsParser;
 import cs451.parser.Parser;
-import cs451.parser.perfectlink.Invoker;
-import cs451.parser.perfectlink.PLConfig;
+import cs451.parser.perfectlink.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Main {
 
 
-    private static void initSignalHandlers( Invoker invoker )
+    private static void initSignalHandlers( Server server )
     {
         Runtime.getRuntime().addShutdownHook( new Thread( () -> {
             //immediately stop network packet processing
             System.out.println("Immediately stopping network packet processing.");
-            invoker.terminate();
+            server.terminate();
 
             //write/flush output file if necessary
             System.out.println("Writing output.");
@@ -28,7 +28,6 @@ public class Main {
 
         PLConfig config = new PLConfig( parser.config() );
         List<Host> hosts = hostsParser.getHosts();
-        int myId = parser.myId();
 
         long pid = ProcessHandle.current().pid();
         System.out.println("My PID: " + pid + "\t My ID: " + parser.myId() + "\n");
@@ -39,16 +38,16 @@ public class Main {
         System.out.println("\nPath to output: " + parser.output());
         System.out.println("Path to config: " + parser.config() + "\n");
 
-        Invoker invoker = new Invoker( hosts, config, myId, parser.output() );
-        initSignalHandlers( invoker );
+        int id = parser.myId();
+        String output = parser.output();
+        Host myHost = hosts.get( id - 1 );
+        Host dest = hosts.get( config.getI() );
+        Server server =  myHost.getId() == dest.getId()
+            ? new Receiver( myHost, output )
+            : new Sender( myHost, dest, output, config );
 
-        invoker.start();
+        initSignalHandlers( server );
 
-        // After a process finishes broadcasting,
-        // it waits forever for the delivery of messages.
-        while (true) {
-            // Sleep for 1 hour
-            Thread.sleep(60 * 60 * 1000);
-        }
+        server.run();
     }
 }

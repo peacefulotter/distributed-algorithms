@@ -1,49 +1,56 @@
 package cs451.parser.packet;
 
+import cs451.Host;
+
 import java.net.DatagramPacket;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
-abstract public class Packet
+public class Packet
 {
-    protected final char tag;
-    protected final int seqNr;
+    private final char tag;
+    private final int seqNr;
+    private final int sender;
 
-    public Packet( char tag, int seqNr )
+    public Packet( PacketTypes type, int seqNr, int sender )
     {
-        this.tag = tag;
+        this.tag = type.getTag();
         this.seqNr = seqNr;
+        this.sender = sender;
     }
 
-    public Packet( byte[] bytes, int seqNrIndex )
+    public Packet( PacketTypes type, DatagramPacket from )
     {
-        System.out.println("[Packet] received: " + new String(bytes) );
-        ByteBuffer wrapped = ByteBuffer.wrap( bytes ); // big-endian by default
-        this.tag = wrapped.getChar( 0 );
-        this.seqNr = wrapped.getInt( seqNrIndex );
+        String msg = new String( from.getData() );
+        this.tag = type.getTag();
+        this.seqNr = Integer.parseInt( msg.trim() );
+        this.sender = Host.portToId.get( from.getPort() );
+        /*String[] split = msg.split( " " );
+        this.tag = split[0].charAt( 0 );
+        this.sender = Integer.parseInt( split[1] );
+        this.seqNr = Integer.parseInt( split[2].trim() );*/
     }
 
     public DatagramPacket getDatagram()
     {
-        byte[] bytes = getMsg().getBytes( StandardCharsets.UTF_8 );
+        String payload = seqNr + "";
+        byte[] bytes = payload.getBytes( StandardCharsets.UTF_8 );
         return new DatagramPacket(bytes, bytes.length);
     }
 
-    abstract public String getMsg();
-
-    public char getTag()
+    public String getMsg()
     {
-        return tag;
+        return tag + " " + sender + " " + seqNr;
     }
-
-    public int getSeqNr()
+    public int getSeqNr() { return seqNr; }
+    public int getSender()
     {
-        return seqNr;
+        return sender;
     }
 
     @Override
     public String toString()
     {
-        return "tag: " + tag + ", seq_nr: " + seqNr;
+        return "tag: " + tag + ", seq_nr: " + seqNr + ", sender: " + sender;
     }
 }

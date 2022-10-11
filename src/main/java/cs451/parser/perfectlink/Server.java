@@ -1,39 +1,38 @@
 package cs451.parser.perfectlink;
 
 import cs451.Host;
-import cs451.parser.packet.PLPacket;
+import cs451.parser.packet.Packet;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.nio.channels.ClosedChannelException;
+import java.util.ArrayList;
+import java.util.List;
 
-abstract public class Server extends Thread
+abstract public class Server
 {
+    private final byte[] buf = new byte[256];
+
     protected final DatagramSocket socket;
     protected final FileHandler handler;
     protected final Host host;
-    protected final Host dest;
 
-    protected final Set<String> delivered;
+    protected final List<String> delivered;
+    protected final Timeout timeout;
 
-    private final byte[] buf = new byte[256];
+    private boolean running;
 
-    public Server( Host host, Host dest, String output )
+    public Server( Host host, String output )
     {
         this.host = host;
-        this.dest = dest;
-        this.delivered = new HashSet<>();
+        this.delivered = new ArrayList<>();
         this.handler = new FileHandler( output );
+        this.timeout = new Timeout();
+        this.running = false;
 
         try
         {
-            this.socket = new DatagramSocket( host.getAddress() );
-            if ( host.getId() != dest.getId() )
-            {
-                System.out.println("Binding " + host + " to " + dest);
-                this.socket.connect( dest.getAddress() );
-            }
+            this.socket = new DatagramSocket( host.getSocketAddress() );
         } catch ( SocketException e )
         {
             throw new RuntimeException( e );
@@ -44,53 +43,62 @@ abstract public class Server extends Thread
 
     protected DatagramPacket getIncomingPacket()
     {
-        DatagramPacket packet = new DatagramPacket(buf, buf.length);
-        try { socket.receive(packet); }
-        catch ( IOException e ) { throw new RuntimeException( e ); }
-        return packet;
-    }
-
-    protected String parsePacket( DatagramPacket packet )
-    {
-        InetAddress address = packet.getAddress();
-        int port = packet.getPort();
-        packet = new DatagramPacket(buf, buf.length, address, port);
-        return new String(packet.getData(), 0, packet.getLength());
-    }
-
-    protected boolean sendPacket( PLPacket packet )
-    {
-        System.out.println(host + "Sending packet: " + packet);
-        try {
-            socket.send( packet.getDatagram() );
-            handler.write( packet.getMsg() );
+        try
+        {
+            DatagramPacket packet = new DatagramPacket(buf, buf.length);
+            socket.receive(packet);
+            return packet;
         }
-        catch ( IOException e ) {
-            System.out.println( host + e.getMessage() );
-            return false;
+        catch ( PortUnreachableException | ClosedChannelException ignored ) {}
+        catch ( IOException e )
+        {
+            terminate(e);
         }
-
-        return true;
+        return null;
     }
 
+    /**
+     * Send a packet to the dest specified by func(dg) or to the connected socket by default
+     */
+    protected void sendPacket( Packet packet, DatagramFunc func ) throws IOException
+    {
+        DatagramPacket datagram = packet.getDatagram();
+        func.setDest( datagram );
+        socket.send( datagram );
+    }
 
-    abstract protected boolean _run();
+    /**
+     * Send a packet to the connected socket
+     */
+    protected void sendPacket( Packet packet ) throws IOException
+    {
+        sendPacket( packet, (dg) -> {} );
+    }
 
-    @Override
+    abstract protected boolean runCallback();
+
     public void run()
     {
-        boolean running = true;
+        running = true;
         System.out.println(host + "Socket running...");
 
         while (running)
-            running = _run();
+            running = runCallback();
 
-        closeConnection();
+        terminate();
     }
 
+    public void terminate( Exception e )
+    {
+        e.printStackTrace();
+        terminate();
+    }
 
-    public void closeConnection() {
+    public void terminate()
+    {
         System.out.println( host + "Closing connection" );
+        running = false;
         socket.close();
+        handler.write();
     }
 }

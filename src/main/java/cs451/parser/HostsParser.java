@@ -15,15 +15,13 @@ public class HostsParser {
     private static final String HOSTS_KEY = "--hosts";
     private static final String SPACES_REGEX = "\\s+";
 
-    private String filename;
-    private List<Host> hosts = new ArrayList<>();
+    private final List<Host> hosts = new ArrayList<>();
 
     public boolean populate(String key, String filename) {
         if (!key.equals(HOSTS_KEY)) {
             return false;
         }
 
-        this.filename = filename;
         try(BufferedReader br = new BufferedReader(new FileReader(filename))) {
             int lineNum = 1;
             for(String line; (line = br.readLine()) != null; lineNum++) {
@@ -37,11 +35,13 @@ public class HostsParser {
                     return false;
                 }
 
-                Host host = new Host();
-                if (!host.populate(splits[0], splits[1], splits[2])) {
+                try {
+                    Host host = Host.populate(splits[0], splits[1], splits[2]);
+                    hosts.add(host);
+                }
+                catch ( Exception e) {
                     return false;
                 }
-                hosts.add(host);
             }
         } catch (IOException e) {
             System.err.println("Problem with the hosts file!");

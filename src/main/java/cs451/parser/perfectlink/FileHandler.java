@@ -1,28 +1,55 @@
 package cs451.parser.perfectlink;
 
+import cs451.parser.packet.Packet;
+
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FileHandler
 {
     private final String path;
+    private final List<String> messages;
 
     public FileHandler( String path )
     {
         this.path = path;
-    }
-    private InputStream resourceStream( String resourceName )
-    {
-        return getClass().getResourceAsStream( resourceName );
+        this.messages = new ArrayList<>();
+        onInit();
     }
 
-    public void write( String m )
+    /**
+     * Clear file content
+     */
+    private void onInit()
     {
-        try (PrintWriter pw = new PrintWriter( path + "_car.csv"))
+        try ( PrintWriter writer = new PrintWriter(path) )
         {
-            pw.println();
+            writer.print("");
+        } catch ( FileNotFoundException e )
+        {
+            throw new RuntimeException( e );
+        }
+    }
+
+    public void register( Packet p )
+    {
+        // TODO: improve this?
+        messages.add( p.getMsg() );
+    }
+
+    /**
+     * Writes the 'messages' list to the output file and clear the said list
+     */
+    public void write()
+    {
+        try ( PrintWriter pw = new PrintWriter( new FileOutputStream( path, true ) ) )
+        {
+            messages.forEach( pw::println );
         } catch ( IOException e )
         {
             e.printStackTrace();
         }
+        messages.clear();
     }
 }

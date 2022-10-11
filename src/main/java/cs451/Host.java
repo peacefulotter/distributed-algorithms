@@ -2,17 +2,33 @@ package cs451;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Host {
 
     private static final String IP_START_REGEX = "/";
+    public static final Map<Integer, Integer> portToId = new HashMap<>();
 
-    private int id;
-    private String ip;
-    private int port = -1;
+    private final int id, port;
+    private final String ip;
+    private final InetSocketAddress socketAddress;
 
-    public boolean populate(String idString, String ipString, String portString) {
+    public Host( int id, int port, String ip )
+    {
+        this.id = id;
+        this.port = port;
+        this.ip = ip;
+        this.socketAddress = new InetSocketAddress( ip, port );
+    }
+
+    public static Host populate( String idString, String ipString, String portString) throws Exception
+    {
+        int id, port = 0;
+        String ip;
+
         try {
             id = Integer.parseInt(idString);
 
@@ -25,21 +41,22 @@ public class Host {
 
             port = Integer.parseInt(portString);
             if (port <= 0) {
-                System.err.println("Port in the hosts file must be a positive number!");
-                return false;
+                throw new Exception("Port in the hosts file must be a positive number!");
             }
-        } catch (NumberFormatException e) {
-            if (port == -1) {
-                System.err.println("Id in the hosts file must be a number!");
-            } else {
-                System.err.println("Port in the hosts file must be a number!");
+        } catch (NumberFormatException e)
+        {
+            if ( port == -1 )
+            {
+                throw new Exception( "Id in the hosts file must be a number!" );
+            } else
+            {
+                throw new Exception( "Port in the hosts file must be a number!" );
             }
-            return false;
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
         }
 
-        return true;
+        portToId.put( port, id );
+
+        return new Host(id, port, ip);
     }
 
     public int getId() {
@@ -60,6 +77,7 @@ public class Host {
         return "(" + id + ") - " + ip + ":" + port + " ";
     }
 
-    public InetSocketAddress getAddress() { return new InetSocketAddress( ip, port ); }
+    public InetSocketAddress getSocketAddress() { return socketAddress; }
+    public InetAddress getAddress() { return socketAddress.getAddress(); }
 
 }
