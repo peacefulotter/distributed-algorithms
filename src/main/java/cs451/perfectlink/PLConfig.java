@@ -1,4 +1,4 @@
-package cs451.parser.perfectlink;
+package cs451.perfectlink;
 
 import java.io.FileInputStream;
 import java.io.IOException;

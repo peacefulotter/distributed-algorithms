@@ -74,7 +74,7 @@ public class Host {
     @Override
     public String toString()
     {
-        return "(" + id + ") - " + ip + ":" + port + " ";
+        return "(" + id + ") - " + ip + ":" + port + "   ";
     }
 
     public InetSocketAddress getSocketAddress() { return socketAddress; }

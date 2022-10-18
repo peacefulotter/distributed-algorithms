@@ -1,6 +1,6 @@
-package cs451.parser.perfectlink;
+package cs451.perfectlink;
 
-import cs451.parser.packet.Packet;
+import cs451.packet.Packet;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -34,8 +34,7 @@ public class FileHandler
 
     public void register( Packet p )
     {
-        // TODO: improve this?
-        messages.add( p.getMsg() );
+        messages.add( p.getFileLine() );
     }
 
     /**
@@ -43,6 +42,8 @@ public class FileHandler
      */
     public void write()
     {
+        System.out.println("WRITING TO FILE");
+        System.out.println(messages);
         try ( PrintWriter pw = new PrintWriter( new FileOutputStream( path, true ) ) )
         {
             messages.forEach( pw::println );

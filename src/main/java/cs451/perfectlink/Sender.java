@@ -1,23 +1,25 @@
-package cs451.parser.perfectlink;
+package cs451.perfectlink;
 
 import cs451.Host;
-import cs451.parser.packet.Packet;
-import cs451.parser.packet.PacketTypes;
+import cs451.packet.Packet;
+import cs451.packet.PacketTypes;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.PortUnreachableException;
 import java.net.SocketException;
 import java.nio.channels.ClosedChannelException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Sender extends Server
 {
     private static final int MAX_RETRANSMIT_TRIES = 5;
 
     private final int nbMessages;
-    private int seqNr;
+    private final List<Integer> broadcasted; // TODO: performance: garbage collection
 
-    private int retransmitTries;
+    private int seqNr, retransmitTries;
     private boolean receiverAlive;
 
     public Sender( Host host, Host dest, String output, PLConfig config )
@@ -27,6 +29,7 @@ public class Sender extends Server
         this.seqNr = 1;
         this.retransmitTries = 0;
         this.receiverAlive = false;
+        this.broadcasted = new ArrayList<>();
 
         System.out.println("Binding " + host + "=> " + dest);
         try
@@ -47,8 +50,8 @@ public class Sender extends Server
         {
             sendPacket( packet );
         }
-        catch ( PortUnreachableException | ClosedChannelException ignored ) {
-            System.out.println(host + "PORT UNREACHABLE OR CHANNEL CLOSED");
+        catch ( PortUnreachableException | ClosedChannelException e ) {
+            System.out.println(host + " " + e.getMessage());
             // prevent considering this as a retransmit try
             retransmitTries--;
             return null;
@@ -61,8 +64,8 @@ public class Sender extends Server
     private void prepareRetransmit()
     {
         if ( !receiverAlive ) return;
-        System.out.println(host + "Retransmit tries: " + retransmitTries + " / " + MAX_RETRANSMIT_TRIES);
-        if ( retransmitTries++ >= MAX_RETRANSMIT_TRIES )
+        System.out.println(host + "Retransmit tries: " + ++retransmitTries + " / " + MAX_RETRANSMIT_TRIES);
+        if ( retransmitTries >= MAX_RETRANSMIT_TRIES )
             terminate();
     }
 
@@ -74,10 +77,10 @@ public class Sender extends Server
 
         DatagramPacket packet = getIncomingPacket();
 
-        // didn't receive ack in the timeout
+        // didn't receive ack in the timeout or something went wrong
         if ( packet == null )
         {
-            System.out.println(host + "Failed to receive ACK for seq_nr: " + seqNr);
+            System.out.println(host + "Receiver alive: " + receiverAlive + " Failed to receive ACK for seq_nr: " + seqNr);
             if ( receiverAlive )
                 timeout.increase();
             return false;
@@ -96,13 +99,16 @@ public class Sender extends Server
         String ackMsg = ack.getMsg();
 
         // deliver msg if not already delivered
-        if ( !delivered.contains( ackMsg ) )
+        if ( !delivered.contains( ackMsg ) && ack.getSeqNr() == seqNr )
         {
-            seqNr++;
-            retransmitTries = 0;
             delivered.add( ackMsg );
-            timeout.decrease();
+            // go to next message
+            seqNr++;
+            // TODO broadcasted.remove(bc.seqNr()) ??
         }
+
+        retransmitTries = 0;
+        timeout.decrease(); // TODO: decrease here??
     }
 
     private boolean broadcastAndAck()
@@ -113,8 +119,13 @@ public class Sender extends Server
         if ( bc == null )
             return false;
 
-        // write broadcast msg
-        handler.register( bc );
+        if ( !broadcasted.contains( bc.getSeqNr() ) )
+        {
+            broadcasted.add( bc.getSeqNr() );
+            // write broadcast msg
+            handler.register( bc );
+        }
+
         // wait for ack
         return waitForAck();
     }
@@ -124,14 +135,13 @@ public class Sender extends Server
     {
         boolean _running = true;
 
-        if ( seqNr < nbMessages )
+        if ( seqNr <= nbMessages )
         {
             boolean broadcasted = broadcastAndAck();
-            System.out.println(host + "BROADCASTED " + broadcasted + "SEQ_NR: " + seqNr) ;
             if ( !broadcasted )
             {
                 prepareRetransmit();
-                _running = retransmitTries < MAX_RETRANSMIT_TRIES;
+                _running = retransmitTries <= MAX_RETRANSMIT_TRIES;
             }
         }
         else

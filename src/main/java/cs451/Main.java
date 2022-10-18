@@ -2,15 +2,18 @@ package cs451;
 
 import cs451.parser.HostsParser;
 import cs451.parser.Parser;
-import cs451.parser.perfectlink.*;
+import cs451.parser.ParserResult;
+import cs451.perfectlink.PLConfig;
+import cs451.perfectlink.Receiver;
+import cs451.perfectlink.Sender;
+import cs451.perfectlink.Server;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class Main {
 
-
-    private static void initSignalHandlers( Server server )
+    public static void initSignalHandlers( Server server )
     {
         Runtime.getRuntime().addShutdownHook( new Thread( () -> {
             //immediately stop network packet processing
@@ -22,32 +25,46 @@ public class Main {
         } ) );
     }
 
-    public static void main(String[] args) throws InterruptedException {
-        Parser parser = new Parser(args);
-        HostsParser hostsParser = parser.parse();
-
-        PLConfig config = new PLConfig( parser.config() );
-        List<Host> hosts = hostsParser.getHosts();
-
+    public static void printDetails( Parser parser )
+    {
         long pid = ProcessHandle.current().pid();
         System.out.println("My PID: " + pid + "\t My ID: " + parser.myId() + "\n");
         System.out.println("`kill -SIGINT " + pid + "` or `kill -SIGTERM " + pid + "` to stop processing packets\n");
-        for (Host host: hosts) {
-            System.out.println(host.getId() + " - IP: " + host.getIp() + " - Port: " + host.getPort() );
-        }
         System.out.println("\nPath to output: " + parser.output());
         System.out.println("Path to config: " + parser.config() + "\n");
+    }
+
+    public static ParserResult parseArgs(String[] args)
+    {
+        System.out.println( Arrays.asList( args ) );
+
+        Parser parser = new Parser(args);
+        HostsParser hostsParser = parser.parse();
+        List<Host> hosts = hostsParser.getHosts();
+        PLConfig config = new PLConfig( parser.config() );
+
+        printDetails( parser );
 
         int id = parser.myId();
         String output = parser.output();
-        Host myHost = hosts.get( id - 1 );
-        Host dest = hosts.get( config.getI() );
-        Server server =  myHost.getId() == dest.getId()
-            ? new Receiver( myHost, output )
-            : new Sender( myHost, dest, output, config );
+        Host host = hosts.get( id - 1 );
+        Host dest = hosts.get( config.getI() - 1 );
 
+        return new ParserResult( host, dest, output, config );
+    }
+
+    public static Server invokeServer( ParserResult result )
+    {
+        return result.host.getId() == result.dest.getId()
+            ? new Receiver( result.host, result.output )
+            : new Sender( result.host, result.dest, result.output, result.config );
+    }
+
+    public static void main(String[] args)
+    {
+        ParserResult result = parseArgs( args );
+        Server server = invokeServer( result );
         initSignalHandlers( server );
-
         server.run();
     }
 }

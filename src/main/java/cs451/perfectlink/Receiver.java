@@ -1,8 +1,8 @@
-package cs451.parser.perfectlink;
+package cs451.perfectlink;
 
 import cs451.Host;
-import cs451.parser.packet.Packet;
-import cs451.parser.packet.PacketTypes;
+import cs451.packet.Packet;
+import cs451.packet.PacketTypes;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -14,7 +14,7 @@ public class Receiver extends Server
         super( host, output );
     }
 
-    private void sendAck( DatagramPacket packet, Packet broadcast )
+    protected void sendAck( DatagramPacket packet, Packet broadcast )
     {
         Packet ack = new Packet( PacketTypes.ACK, broadcast.getSeqNr(), host.getId() );
         System.out.println( host + "Sending ACK to: " + packet.getPort() + ", msg: " + ack.getMsg() );

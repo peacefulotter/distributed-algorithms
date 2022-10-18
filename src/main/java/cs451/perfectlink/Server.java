@@ -1,7 +1,7 @@
-package cs451.parser.perfectlink;
+package cs451.perfectlink;
 
 import cs451.Host;
-import cs451.parser.packet.Packet;
+import cs451.packet.Packet;
 
 import java.io.IOException;
 import java.net.*;
@@ -11,12 +11,14 @@ import java.util.List;
 
 abstract public class Server
 {
-    private final byte[] buf = new byte[256];
+    private final byte[] buf = new byte[32];
+    private boolean closed;
 
     protected final DatagramSocket socket;
     protected final FileHandler handler;
     protected final Host host;
 
+    // TODO: delivered only to receiver + garbage collection
     protected final List<String> delivered;
     protected final Timeout timeout;
 
@@ -33,6 +35,7 @@ abstract public class Server
         try
         {
             this.socket = new DatagramSocket( host.getSocketAddress() );
+            closed = false;
         } catch ( SocketException e )
         {
             throw new RuntimeException( e );
@@ -43,11 +46,18 @@ abstract public class Server
 
     protected DatagramPacket getIncomingPacket()
     {
+        long a = System.nanoTime();
         try
         {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             socket.receive(packet);
             return packet;
+        }
+        catch ( SocketTimeoutException e )
+        {
+            long b = System.nanoTime();
+            long delta = (b - a) / 1000000;
+            System.out.println(host + "INCOMING PACKET TIMEOUT: " + timeout.get() + "ms, delta: " + delta + "ms");
         }
         catch ( PortUnreachableException | ClosedChannelException ignored ) {}
         catch ( IOException e )
@@ -82,7 +92,7 @@ abstract public class Server
         running = true;
         System.out.println(host + "Socket running...");
 
-        while (running)
+        while (running && !closed)
             running = runCallback();
 
         terminate();
@@ -98,6 +108,7 @@ abstract public class Server
     {
         System.out.println( host + "Closing connection" );
         running = false;
+        closed = true;
         socket.close();
         handler.write();
     }
