@@ -1,33 +1,30 @@
 package cs451.perfectlink;
 
 import cs451.Host;
+import cs451.Logger;
 import cs451.packet.Packet;
 
 import java.io.IOException;
 import java.net.*;
 import java.nio.channels.ClosedChannelException;
-import java.util.ArrayList;
-import java.util.List;
 
 abstract public class Server
 {
     private final byte[] buf = new byte[32];
-    private boolean closed;
 
     protected final DatagramSocket socket;
     protected final FileHandler handler;
     protected final Host host;
-
-    // TODO: delivered only to receiver + garbage collection
-    protected final List<String> delivered;
     protected final Timeout timeout;
 
+    protected boolean closed;
+
+    private Logger.Color color;
     private boolean running;
 
     public Server( Host host, String output )
     {
         this.host = host;
-        this.delivered = new ArrayList<>();
         this.handler = new FileHandler( output );
         this.timeout = new Timeout();
         this.running = false;
@@ -41,7 +38,22 @@ abstract public class Server
             throw new RuntimeException( e );
         }
 
-        System.out.println( host + "Socket connected" );
+        log( "Socket connected" );
+    }
+
+    protected void log( String s )
+    {
+        Logger.log( color, host, s );
+    }
+
+    protected void log( String prefix, String s )
+    {
+        log( "[" + prefix + "] " + s );
+    }
+
+    public void setColor( Logger.Color color )
+    {
+        this.color = color;
     }
 
     protected DatagramPacket getIncomingPacket()
@@ -57,9 +69,11 @@ abstract public class Server
         {
             long b = System.nanoTime();
             long delta = (b - a) / 1000000;
-            System.out.println(host + "INCOMING PACKET TIMEOUT: " + timeout.get() + "ms, delta: " + delta + "ms");
+            log( "INCOMING PACKET TIMEOUT: " + timeout.get() + "ms, delta: " + delta + "ms");
         }
-        catch ( PortUnreachableException | ClosedChannelException ignored ) {}
+        catch ( PortUnreachableException | ClosedChannelException e ) {
+            log( e.getMessage() );
+        }
         catch ( IOException e )
         {
             terminate(e);
@@ -90,7 +104,7 @@ abstract public class Server
     public void run()
     {
         running = true;
-        System.out.println(host + "Socket running...");
+        log( "Socket running...");
 
         while (running && !closed)
             running = runCallback();
@@ -100,13 +114,13 @@ abstract public class Server
 
     public void terminate( Exception e )
     {
-        e.printStackTrace();
+        log( e.getMessage() );
         terminate();
     }
 
     public void terminate()
     {
-        System.out.println( host + "Closing connection" );
+        log(  "Closing connection" );
         running = false;
         closed = true;
         socket.close();

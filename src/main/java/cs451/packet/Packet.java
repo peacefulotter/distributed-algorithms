@@ -4,6 +4,7 @@ import cs451.Host;
 
 import java.net.DatagramPacket;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 public class Packet
 {
@@ -42,6 +43,21 @@ public class Packet
     public int getSender()
     {
         return sender;
+    }
+
+    @Override
+    public boolean equals( Object o )
+    {
+        if ( this == o ) return true;
+        if ( o == null || getClass() != o.getClass() ) return false;
+        Packet packet = (Packet) o;
+        return seqNr == packet.seqNr && sender == packet.sender && type == packet.type;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash( type, seqNr, sender );
     }
 
     @Override

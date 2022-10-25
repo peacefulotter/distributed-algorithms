@@ -34,16 +34,14 @@ public class Main {
         System.out.println("Path to config: " + parser.config() + "\n");
     }
 
-    public static ParserResult parseArgs(String[] args)
+    public static ParserResult parseArgs(String... args)
     {
-        System.out.println( Arrays.asList( args ) );
-
         Parser parser = new Parser(args);
         HostsParser hostsParser = parser.parse();
         List<Host> hosts = hostsParser.getHosts();
         PLConfig config = new PLConfig( parser.config() );
 
-        printDetails( parser );
+        // printDetails( parser );
 
         int id = parser.myId();
         String output = parser.output();

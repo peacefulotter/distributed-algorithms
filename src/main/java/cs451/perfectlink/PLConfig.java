@@ -17,7 +17,6 @@ public class PLConfig
             String[] split = content.split( " " );
             m = Integer.parseInt( split[0].trim() );
             i = Integer.parseInt( split[1].trim() );
-            System.out.println("PLConfigParser - m: " + m + ", i: " + i);
         } catch ( IOException e )
         {
             throw new RuntimeException( e );

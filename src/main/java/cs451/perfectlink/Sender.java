@@ -14,10 +14,11 @@ import java.util.List;
 
 public class Sender extends Server
 {
-    private static final int MAX_RETRANSMIT_TRIES = 5;
+    protected static final int MAX_RETRANSMIT_TRIES = 5;
 
-    private final int nbMessages;
+    private final List<String> delivered;
     private final List<Integer> broadcasted; // TODO: performance: garbage collection
+    private final int nbMessages;
 
     private int seqNr, retransmitTries;
     private boolean receiverAlive;
@@ -29,9 +30,10 @@ public class Sender extends Server
         this.seqNr = 1;
         this.retransmitTries = 0;
         this.receiverAlive = false;
+        this.delivered = new ArrayList<>();
         this.broadcasted = new ArrayList<>();
 
-        System.out.println("Binding " + host + "=> " + dest);
+        log( "Binding to " + dest );
         try
         {
             this.socket.connect( dest.getSocketAddress() );
@@ -44,19 +46,21 @@ public class Sender extends Server
     private Packet broadcastPacket()
     {
         Packet packet = new Packet( PacketTypes.BROADCAST, seqNr, host.getId() );
-        System.out.println(host + "Sending packet " + packet);
+        log( "Sending packet " + packet );
 
         try
         {
             sendPacket( packet );
-        }
-        catch ( PortUnreachableException | ClosedChannelException e ) {
-            System.out.println(host + " " + e.getMessage());
+        } catch ( PortUnreachableException | ClosedChannelException e )
+        {
+            log( e.getMessage() );
             // prevent considering this as a retransmit try
             retransmitTries--;
             return null;
+        } catch ( IOException e )
+        {
+            terminate( e );
         }
-        catch ( IOException e ) { terminate( e ); }
 
         return packet;
     }
@@ -64,23 +68,31 @@ public class Sender extends Server
     private void prepareRetransmit()
     {
         if ( !receiverAlive ) return;
-        System.out.println(host + "Retransmit tries: " + ++retransmitTries + " / " + MAX_RETRANSMIT_TRIES);
+        log( "Retransmit tries: " + ++retransmitTries + " / " + MAX_RETRANSMIT_TRIES );
         if ( retransmitTries >= MAX_RETRANSMIT_TRIES )
             terminate();
     }
 
+    private void setTimeout()
+    {
+        try
+        {
+            socket.setSoTimeout( timeout.get() );
+        } catch ( SocketException e )
+        {
+            terminate( e );
+        }
+    }
+
     private boolean waitForAck()
     {
-        // set timeout
-        try { socket.setSoTimeout( timeout.get() ); }
-        catch ( SocketException e ) { terminate( e ); }
-
+        setTimeout();
         DatagramPacket packet = getIncomingPacket();
 
         // didn't receive ack in the timeout or something went wrong
         if ( packet == null )
         {
-            System.out.println(host + "Receiver alive: " + receiverAlive + " Failed to receive ACK for seq_nr: " + seqNr);
+            log( "Receiver alive: " + receiverAlive + " Failed to receive ACK for seq_nr: " + seqNr );
             if ( receiverAlive )
                 timeout.increase();
             return false;
@@ -95,7 +107,7 @@ public class Sender extends Server
         receiverAlive = true;
 
         Packet ack = new Packet( PacketTypes.ACK, packet );
-        System.out.println( host + "Received ACK: " + ack );
+        log("Received ACK: " + ack );
         String ackMsg = ack.getMsg();
 
         // deliver msg if not already delivered
@@ -111,7 +123,7 @@ public class Sender extends Server
         timeout.decrease(); // TODO: decrease here??
     }
 
-    private boolean broadcastAndAck()
+    protected boolean broadcastAndAck()
     {
         // broadcast packet to receiver
         Packet bc = broadcastPacket();
@@ -143,10 +155,9 @@ public class Sender extends Server
                 prepareRetransmit();
                 _running = retransmitTries <= MAX_RETRANSMIT_TRIES;
             }
-        }
-        else
+        } else
         {
-            System.out.println(host + "Done transmitting");
+            log( "Done transmitting" );
             return false;
         }
 

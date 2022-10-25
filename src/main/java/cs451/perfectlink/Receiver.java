@@ -6,18 +6,23 @@ import cs451.packet.PacketTypes;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Receiver extends Server
 {
+    protected final List<String> delivered;
+
     public Receiver( Host host, String output )
     {
         super( host, output );
+        this.delivered = new ArrayList<>();
     }
 
     protected void sendAck( DatagramPacket packet, Packet broadcast )
     {
         Packet ack = new Packet( PacketTypes.ACK, broadcast.getSeqNr(), host.getId() );
-        System.out.println( host + "Sending ACK to: " + packet.getPort() + ", msg: " + ack.getMsg() );
+        log( "Sending ACK to: " + packet.getPort() + ", msg: " + ack.getMsg() );
         try
         {
             sendPacket( ack, ( dg ) -> {
@@ -33,12 +38,10 @@ public class Receiver extends Server
     @Override
     protected boolean runCallback()
     {
-        System.out.println( host + "waiting..." );
-
         DatagramPacket packet = getIncomingPacket();
         Packet bc = new Packet( PacketTypes.DELIVER, packet );
 
-        System.out.println( host + "Received from: " + packet.getPort() + ", msg: " + bc.getMsg() );
+        log( "Received from: " + packet.getPort() + ", msg: " + bc.getMsg() );
 
         sendAck( packet, bc );
 
