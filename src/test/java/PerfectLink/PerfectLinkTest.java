@@ -13,6 +13,10 @@ import java.util.Arrays;
 
 class PerfectLinkTest
 {
+    // ../template_java/build.sh
+    // python3 tc.py
+    // python3 stress.py -r ../template_java/run.sh -t perfect -l ./output -p 5 -m 250
+
     protected static void serverTest( Server server )
     {
         new Thread( () -> {
@@ -39,11 +43,11 @@ class PerfectLinkTest
         return s;
     }
 
-    protected Server receiver( int id, Logger.Color color )
+    protected Server receiver( int id )
     {
         ParserResult r = Main.parseArgs( getArgs( id ) );
         Server s = new Receiver( r.host, r.output );
-        s.setColor( color );
+        s.setColor( Logger.Color.RED );
         return s;
     }
 
@@ -55,11 +59,11 @@ class PerfectLinkTest
         return s;
     }
 
-    protected Server droppingReceiver( int id, Logger.Color color )
+    protected Server droppingReceiver( int id )
     {
         ParserResult r = Main.parseArgs( getArgs( id ) );
         Server s = new DroppingReceiver( r );
-        s.setColor( color );
+        s.setColor( Logger.Color.RED );
         return s;
     }
 
@@ -78,7 +82,7 @@ class PerfectLinkTest
     public void droppingReceiverTest()
     {
         Server s1 = sender( 1, Logger.Color.BLUE );
-        Server s2 = droppingReceiver( 2, Logger.Color.RED );
+        Server s2 = droppingReceiver( 2 );
         Server s3 = sender(3, Logger.Color.GREEN );
 
         serverTest( s1 );
@@ -92,7 +96,7 @@ class PerfectLinkTest
     public void droppingSenderTest()
     {
         Server s1 = droppingSender( 1, Logger.Color.BLUE );
-        Server s2 = receiver( 2, Logger.Color.RED );
+        Server s2 = receiver( 2 );
         Server s3 = droppingSender(3, Logger.Color.GREEN );
 
         serverTest( s1 );
@@ -106,7 +110,7 @@ class PerfectLinkTest
     public void droppingSenderReceiverTest()
     {
         Server s1 = droppingSender( 1, Logger.Color.BLUE );
-        Server s2 = droppingReceiver( 2, Logger.Color.RED );
+        Server s2 = droppingReceiver( 2 );
         Server s3 = droppingSender(3, Logger.Color.GREEN );
 
         serverTest( s1 );

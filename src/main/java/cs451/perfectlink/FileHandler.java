@@ -3,18 +3,17 @@ package cs451.perfectlink;
 import cs451.packet.Packet;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class FileHandler
 {
     private final String path;
-    private final List<String> messages;
+    private final ConcurrentLinkedQueue<String> messages;
 
     public FileHandler( String path )
     {
         this.path = path;
-        this.messages = new ArrayList<>();
+        this.messages = new ConcurrentLinkedQueue<>();
         onInit();
     }
 

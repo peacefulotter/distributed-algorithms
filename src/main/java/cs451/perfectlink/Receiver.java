@@ -22,7 +22,7 @@ public class Receiver extends Server
     protected void sendAck( DatagramPacket packet, Packet broadcast )
     {
         Packet ack = new Packet( PacketTypes.ACK, broadcast.getSeqNr(), host.getId() );
-        log( "Sending ACK to: " + packet.getPort() + ", msg: " + ack.getMsg() );
+        log( "Sending ACK : " + ack );
         try
         {
             sendPacket( ack, ( dg ) -> {
@@ -41,14 +41,15 @@ public class Receiver extends Server
         DatagramPacket packet = getIncomingPacket();
         Packet bc = new Packet( PacketTypes.DELIVER, packet );
 
-        log( "Received from: " + packet.getPort() + ", msg: " + bc.getMsg() );
+        log( "Received : " + bc );
 
         sendAck( packet, bc );
 
         if ( !delivered.contains( bc.getMsg() ) )
         {
-            handler.register( bc );
+            log( "Delivering : " + bc );
             delivered.add( bc.getMsg() );
+            handler.register( bc );
         }
 
         return true;

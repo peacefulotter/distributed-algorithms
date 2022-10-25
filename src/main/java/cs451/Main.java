@@ -3,10 +3,7 @@ package cs451;
 import cs451.parser.HostsParser;
 import cs451.parser.Parser;
 import cs451.parser.ParserResult;
-import cs451.perfectlink.PLConfig;
-import cs451.perfectlink.Receiver;
-import cs451.perfectlink.Sender;
-import cs451.perfectlink.Server;
+import cs451.perfectlink.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +52,7 @@ public class Main {
     {
         return result.host.getId() == result.dest.getId()
             ? new Receiver( result.host, result.output )
-            : new Sender( result.host, result.dest, result.output, result.config );
+            : new PerformantSender( result.host, result.dest, result.output, result.config );
     }
 
     public static void main(String[] args)

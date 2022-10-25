@@ -11,6 +11,20 @@ import org.junit.jupiter.api.Test;
 
 class PerformantPerfectLinkTest extends PerfectLinkTest
 {
+    private void handler( int id, int nbSenders, int nbMessages )
+    {
+        Runtime.getRuntime().addShutdownHook( new Thread( () -> {
+            try
+            {
+                Thread.sleep( 1000 );
+            } catch ( InterruptedException e )
+            {
+                throw new RuntimeException( e );
+            }
+            FileVerifier.verifySender( id, nbSenders, nbMessages );
+        } ) );
+    }
+
     protected Server performantSender( int id, Logger.Color color )
     {
         ParserResult r = Main.parseArgs( getArgs( id ) );
@@ -23,7 +37,7 @@ class PerformantPerfectLinkTest extends PerfectLinkTest
     public void droppingSenderReceiverTest()
     {
         Server s1 = performantSender( 1, Logger.Color.BLUE );
-        Server s2 = receiver( 2, Logger.Color.RED );
+        Server s2 = receiver( 2 );
         Server s3 = performantSender(3, Logger.Color.GREEN );
 
         serverTest( s1 );
@@ -32,4 +46,6 @@ class PerformantPerfectLinkTest extends PerfectLinkTest
 
         hold();
     }
+
+    // TODO: check file content
 }

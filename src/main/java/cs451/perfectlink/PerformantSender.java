@@ -10,7 +10,9 @@ import java.net.PortUnreachableException;
 import java.net.SocketException;
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 public class PerformantSender extends Server
@@ -18,7 +20,7 @@ public class PerformantSender extends Server
     protected static final int MAX_RETRANSMIT_TRIES = 10;
     protected static final int MAX_NB_THREADS = 32; // TODO: proportional per sender
 
-    private final List<Packet> delivered; // TODO: performance: garbage collection
+    private final ConcurrentLinkedQueue<Packet> delivered; // TODO: performance: garbage collection
     private final int nbMessages;
 
     private int seqNr, threads;
@@ -31,7 +33,7 @@ public class PerformantSender extends Server
         this.seqNr = 1;
         this.threads = 1;
         this.receiverAlive = false;
-        this.delivered = new ArrayList<>();
+        this.delivered = new ConcurrentLinkedQueue<>();
 
         log( "Binding to " + dest );
         try
@@ -49,12 +51,14 @@ public class PerformantSender extends Server
 
         private Packet packet;
         private int retransmitTries;
+        private boolean registered;
 
         public PacketThread( int threadId, int seqNr )
         {
             this.threadId = threadId;
             this.seqNr = seqNr;
             this.retransmitTries = 0;
+            this.registered = false;
         }
 
         @Override
@@ -98,15 +102,26 @@ public class PerformantSender extends Server
                 return false;
             }
 
-            onAck( packet );
+            return onAck( packet );
+        }
+
+        private boolean onAck( DatagramPacket packet )
+        {
+            Packet ack = new Packet( PacketTypes.ACK, packet );
+            if ( ack.getSeqNr() != seqNr )
+                return false;
+            log(threadId + "","Received ACK: " + ack );
+            deliverPacket( ack );
             return true;
         }
 
-        private void onAck( DatagramPacket packet )
+        private void release()
         {
-            Packet ack = new Packet( PacketTypes.ACK, packet );
-            log(threadId + "","Received ACK: " + ack );
-            deliverPacket( ack );
+            try { Thread.sleep(retransmitTries * 10L ); } // FIXME: experimental
+            catch ( InterruptedException e )
+            {
+                throw new RuntimeException( e );
+            }
         }
 
         private void prepareRetransmit()
@@ -115,6 +130,8 @@ public class PerformantSender extends Server
             log( threadId + "","Retransmit tries: " + ++retransmitTries + " / " + MAX_RETRANSMIT_TRIES );
             if ( retransmitTries >= MAX_RETRANSMIT_TRIES )
                 terminate();
+            else
+                release();
         }
 
         @Override
@@ -131,8 +148,9 @@ public class PerformantSender extends Server
                     prepareRetransmit();
                     continue;
                 }
-                else
+                else if ( !registered )
                 {
+                    registered = true;
                     handler.register( bc );
                 }
 
