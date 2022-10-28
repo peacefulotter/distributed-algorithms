@@ -16,4 +16,15 @@ public class ParserResult
         this.output = output;
         this.config = config;
     }
+
+    @Override
+    public String toString()
+    {
+        return "ParserResult{" +
+            "host=" + host +
+            ", dest=" + dest +
+            ", output='" + output + '\'' +
+            ", config=" + config +
+            '}';
+    }
 }

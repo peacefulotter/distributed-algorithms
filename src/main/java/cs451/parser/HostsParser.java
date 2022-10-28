@@ -1,12 +1,12 @@
 package cs451.parser;
 
 import cs451.Host;
+import cs451.perfectlink.Sender;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -16,6 +16,8 @@ public class HostsParser {
     private static final String SPACES_REGEX = "\\s+";
 
     private final List<Host> hosts = new ArrayList<>();
+
+    public static int HOST_NB;
 
     public boolean populate(String key, String filename) {
         if (!key.equals(HOSTS_KEY)) {
@@ -54,7 +56,7 @@ public class HostsParser {
         }
 
         // sort by id
-        Collections.sort(hosts, new HostsComparator());
+        hosts.sort( new HostsComparator() );
         return true;
     }
 
@@ -78,12 +80,9 @@ public class HostsParser {
         return hosts;
     }
 
-    class HostsComparator implements Comparator<Host> {
-
+    static class HostsComparator implements Comparator<Host> {
         public int compare(Host a, Host b) {
             return a.getId() - b.getId();
         }
-
     }
-
 }

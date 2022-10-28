@@ -2,7 +2,10 @@ package cs451.perfectlink;
 
 import cs451.packet.Packet;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class FileHandler
@@ -33,7 +36,7 @@ public class FileHandler
 
     public void register( Packet p )
     {
-        messages.add( p.getFileLine() );
+        messages.addAll( p.getFileLines() );
     }
 
     /**
@@ -41,8 +44,6 @@ public class FileHandler
      */
     public void write()
     {
-        System.out.println("WRITING TO FILE");
-        System.out.println(messages);
         try ( PrintWriter pw = new PrintWriter( new FileOutputStream( path, true ) ) )
         {
             messages.forEach( pw::println );

@@ -2,36 +2,27 @@ package cs451.perfectlink;
 
 import cs451.Host;
 import cs451.packet.Packet;
-import cs451.packet.PacketTypes;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.PortUnreachableException;
 import java.net.SocketException;
-import java.nio.channels.ClosedChannelException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Sender extends Server
 {
-    protected static final int MAX_RETRANSMIT_TRIES = 5;
+    private static final int N_THREADS = 3;
+    private static final int MAX_MSGS_PER_PACKET = 8;
 
-    private final List<String> delivered;
-    private final List<Integer> broadcasted; // TODO: performance: garbage collection
+    private final ConcurrentLinkedQueue<Packet> delivered; // TODO: performance: garbage collection
+    private final ThreadPool pool;
     private final int nbMessages;
-
-    private int seqNr, retransmitTries;
-    private boolean receiverAlive;
 
     public Sender( Host host, Host dest, String output, PLConfig config )
     {
         super( host, output );
         this.nbMessages = config.getM();
-        this.seqNr = 1;
-        this.retransmitTries = 0;
-        this.receiverAlive = false;
-        this.delivered = new ArrayList<>();
-        this.broadcasted = new ArrayList<>();
+        this.delivered = new ConcurrentLinkedQueue<>();
+        this.pool = new ThreadPool( this, N_THREADS );
 
         log( "Binding to " + dest );
         try
@@ -43,124 +34,56 @@ public class Sender extends Server
         }
     }
 
-    private Packet broadcastPacket()
+    protected boolean setTimeout()
     {
-        Packet packet = new Packet( PacketTypes.BROADCAST, seqNr, host.getId() );
-        log( "Sending packet " + packet );
-
-        try
-        {
-            sendPacket( packet );
-        } catch ( PortUnreachableException | ClosedChannelException e )
-        {
-            log( e.getMessage() );
-            // prevent considering this as a retransmit try
-            retransmitTries--;
-            return null;
-        } catch ( IOException e )
-        {
+        try { socket.setSoTimeout( timeout.get() ); }
+        catch ( SocketException e ) {
             terminate( e );
-        }
-
-        return packet;
-    }
-
-    private void prepareRetransmit()
-    {
-        if ( !receiverAlive ) return;
-        log( "Retransmit tries: " + ++retransmitTries + " / " + MAX_RETRANSMIT_TRIES );
-        if ( retransmitTries >= MAX_RETRANSMIT_TRIES )
-            terminate();
-    }
-
-    private void setTimeout()
-    {
-        try
-        {
-            socket.setSoTimeout( timeout.get() );
-        } catch ( SocketException e )
-        {
-            terminate( e );
-        }
-    }
-
-    private boolean waitForAck()
-    {
-        setTimeout();
-        DatagramPacket packet = getIncomingPacket();
-
-        // didn't receive ack in the timeout or something went wrong
-        if ( packet == null )
-        {
-            log( "Receiver alive: " + receiverAlive + " Failed to receive ACK for seq_nr: " + seqNr );
-            if ( receiverAlive )
-                timeout.increase();
             return false;
         }
-
-        onAck( packet );
         return true;
     }
 
-    private void onAck( DatagramPacket packet )
+    protected void deliverPacket( Packet ack )
     {
-        receiverAlive = true;
-
-        Packet ack = new Packet( PacketTypes.ACK, packet );
-        log("Received ACK: " + ack );
-        String ackMsg = ack.getMsg();
-
         // deliver msg if not already delivered
-        if ( !delivered.contains( ackMsg ) && ack.getSeqNr() == seqNr )
+        if ( !delivered.contains( ack ) )
         {
-            delivered.add( ackMsg );
-            // go to next message
-            seqNr++;
-            // TODO broadcasted.remove(bc.seqNr()) ??
+            log( "Delivering " + ack );
+            delivered.add( ack );
+            timeout.decrease();
         }
 
-        retransmitTries = 0;
-        timeout.decrease(); // TODO: decrease here??
-    }
-
-    protected boolean broadcastAndAck()
-    {
-        // broadcast packet to receiver
-        Packet bc = broadcastPacket();
-        // if broadcast failed
-        if ( bc == null )
-            return false;
-
-        if ( !broadcasted.contains( bc.getSeqNr() ) )
-        {
-            broadcasted.add( bc.getSeqNr() );
-            // write broadcast msg
-            handler.register( bc );
-        }
-
-        // wait for ack
-        return waitForAck();
+        // TODO: garbage collection here
     }
 
     @Override
     protected boolean runCallback()
     {
-        boolean _running = true;
-
-        if ( seqNr <= nbMessages )
+        // TODO: MAX SUBMIT TASKS
+        int seqNr;
+        for ( seqNr = 1; seqNr < nbMessages; seqNr += MAX_MSGS_PER_PACKET )
         {
-            boolean broadcasted = broadcastAndAck();
-            if ( !broadcasted )
-            {
-                prepareRetransmit();
-                _running = retransmitTries <= MAX_RETRANSMIT_TRIES;
-            }
-        } else
-        {
-            log( "Done transmitting" );
-            return false;
+            // try to send a maximum of 8 messages per packet
+            int messages = Math.min(MAX_MSGS_PER_PACKET, nbMessages - seqNr + 1);
+            pool.submitTask( seqNr, messages );
         }
 
-        return _running;
+        /*seqNr -= MAX_MSGS_PER_PACKET;
+        int rest = nbMessages % MAX_MSGS_PER_PACKET;
+        if ( rest > 0 )
+        {
+            log( "======================== MOD " + seqNr  + "  " + rest );
+            pool.submitTask( seqNr, rest );
+        }*/
+
+        return pool.awaitTermination();
+    }
+
+    @Override
+    public void terminate()
+    {
+        pool.shutdown();
+        super.terminate();
     }
 }

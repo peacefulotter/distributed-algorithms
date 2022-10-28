@@ -26,11 +26,11 @@ abstract public class Server
     {
         this.host = host;
         this.handler = new FileHandler( output );
-        this.timeout = new Timeout();
         this.running = false;
 
         try
         {
+            System.out.println(host);
             this.socket = new DatagramSocket( host.getSocketAddress() );
             closed = false;
         } catch ( SocketException e )
@@ -38,6 +38,7 @@ abstract public class Server
             throw new RuntimeException( e );
         }
 
+        this.timeout = new Timeout( this  );
         log( "Socket connected" );
     }
 
@@ -58,18 +59,14 @@ abstract public class Server
 
     protected DatagramPacket getIncomingPacket()
     {
-        long a = System.nanoTime();
         try
         {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             socket.receive(packet);
             return packet;
         }
-        catch ( SocketTimeoutException e )
-        {
-            long b = System.nanoTime();
-            long delta = (b - a) / 1000000;
-            log( "INCOMING PACKET TIMEOUT: " + timeout.get() + "ms, delta: " + delta + "ms");
+        catch ( SocketTimeoutException e ) {
+            log( "TimeoutException: " + timeout.get() + "ms");
         }
         catch ( PortUnreachableException | ClosedChannelException e ) {
             log( e.getMessage() );
@@ -107,7 +104,10 @@ abstract public class Server
         log( "Socket running...");
 
         while (running && !closed)
+        {
             running = runCallback();
+            Sleeper.release();
+        }
 
         terminate();
     }
@@ -120,6 +120,7 @@ abstract public class Server
 
     public void terminate()
     {
+        if ( closed ) return;
         log(  "Closing connection" );
         running = false;
         closed = true;

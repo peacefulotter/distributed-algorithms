@@ -1,9 +1,14 @@
 package cs451;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
+
 public class Logger
 {
-    private static final boolean DISABLED = false;
-
+    private static final boolean ENABLED = true;
+    private static final Clock clock = new HighLevelClock();
     public enum Color
     {
         RED("\033[31m", "\033[0m"),
@@ -18,11 +23,48 @@ public class Logger
             this.c2 = c2;
         }
     }
+
+    private static class TimeProvider
+    {
+        private final static long jvm_diff = System.currentTimeMillis() * 1000_000 - System.nanoTime();
+        public static long getAccurateNow() {
+            return System.nanoTime() + jvm_diff;
+        }
+    }
+
+    private static class HighLevelClock extends Clock
+    {
+        private final ZoneId zoneId = ZoneId.systemDefault();
+
+        static long nano_per_second = 1000_000_000L;
+
+        @Override
+        public ZoneId getZone() {
+            return zoneId;
+        }
+
+        @Override
+        public Clock withZone(ZoneId zoneId) {
+            return new HighLevelClock();
+        }
+
+        @Override
+        public Instant instant() {
+            long nanos = TimeProvider.getAccurateNow();
+            return Instant.ofEpochSecond(nanos/nano_per_second, nanos%nano_per_second);
+        }
+    }
+
+    private static LocalTime time()
+    {
+        return LocalTime.now(clock);
+    }
+
     public static void log( Logger.Color color, Host h, String s)
     {
-        if ( DISABLED ) return;
+        if ( !ENABLED ) return;
         String c1 = color == null ? "" : color.c1;
         String c2 = color == null ? "" : color.c2;
-        System.out.println(c1 + h + c2 + " " + s);
+        System.out.println(c1 + time() + " " + h + c2 + " " + s);
     }
 }

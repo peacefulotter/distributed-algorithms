@@ -5,7 +5,6 @@ import cs451.parser.Parser;
 import cs451.parser.ParserResult;
 import cs451.perfectlink.*;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class Main {
@@ -16,9 +15,6 @@ public class Main {
             //immediately stop network packet processing
             System.out.println("Immediately stopping network packet processing.");
             server.terminate();
-
-            //write/flush output file if necessary
-            System.out.println("Writing output.");
         } ) );
     }
 
@@ -38,21 +34,24 @@ public class Main {
         List<Host> hosts = hostsParser.getHosts();
         PLConfig config = new PLConfig( parser.config() );
 
-        // printDetails( parser );
+        printDetails( parser );
 
         int id = parser.myId();
         String output = parser.output();
         Host host = hosts.get( id - 1 );
         Host dest = hosts.get( config.getI() - 1 );
 
-        return new ParserResult( host, dest, output, config );
+        ParserResult res = new ParserResult( host, dest, output, config );
+        System.out.println(res);
+
+        return res;
     }
 
     public static Server invokeServer( ParserResult result )
     {
         return result.host.getId() == result.dest.getId()
             ? new Receiver( result.host, result.output )
-            : new PerformantSender( result.host, result.dest, result.output, result.config );
+            : new Sender( result.host, result.dest, result.output, result.config );
     }
 
     public static void main(String[] args)

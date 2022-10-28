@@ -16,7 +16,7 @@ public class DroppingReceiver extends Receiver
         super( result.host, result.output );
     }
 
-    @Override
+    /*@Override
     protected boolean runCallback()
     {
         DatagramPacket packet = getIncomingPacket();
@@ -39,5 +39,5 @@ public class DroppingReceiver extends Receiver
         }
 
         return true;
-    }
+    }*/
 }

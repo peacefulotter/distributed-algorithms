@@ -12,7 +12,7 @@ public class DroppingSender extends Sender
         super( result.host, result.dest, result.output, result.config );
     }
 
-    @Override
+    /*@Override
     protected boolean broadcastAndAck()
     {
         if ( Math.random() <= DROPPING_RATE )
@@ -21,5 +21,5 @@ public class DroppingSender extends Sender
             return false;
         }
         return super.broadcastAndAck();
-    }
+    }*/
 }

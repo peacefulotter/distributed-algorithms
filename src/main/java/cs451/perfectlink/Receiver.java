@@ -11,7 +11,7 @@ import java.util.List;
 
 public class Receiver extends Server
 {
-    protected final List<String> delivered;
+    protected final List<Packet> delivered;
 
     public Receiver( Host host, String output )
     {
@@ -21,7 +21,7 @@ public class Receiver extends Server
 
     protected void sendAck( DatagramPacket packet, Packet broadcast )
     {
-        Packet ack = new Packet( PacketTypes.ACK, broadcast.getSeqNr(), host.getId() );
+        Packet ack = new Packet( PacketTypes.ACK, broadcast.getSeqNr(), host.getId(), broadcast.getMessages() );
         log( "Sending ACK : " + ack );
         try
         {
@@ -45,10 +45,10 @@ public class Receiver extends Server
 
         sendAck( packet, bc );
 
-        if ( !delivered.contains( bc.getMsg() ) )
+        if ( !delivered.contains( bc ) )
         {
             log( "Delivering : " + bc );
-            delivered.add( bc.getMsg() );
+            delivered.add( bc );
             handler.register( bc );
         }
 

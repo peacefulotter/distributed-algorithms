@@ -21,11 +21,15 @@ class PerfectLinkTest
     {
         new Thread( () -> {
             Main.initSignalHandlers( server );
+            long t1 = System.nanoTime();
             server.run();
+            long t2 = System.nanoTime();
+            long delta = (t2 - t1) / 1000000;
+            System.out.println(delta + "ms");
         } ).start();
     }
 
-    protected String[] getArgs( int id )
+    protected static String[] getArgs( int id )
     {
         return new String[] {
             "--id", id + "",
@@ -35,7 +39,7 @@ class PerfectLinkTest
         };
     }
 
-    protected Server sender( int id, Logger.Color color )
+    protected static Server sender( int id, Logger.Color color )
     {
         ParserResult r = Main.parseArgs( getArgs( id ) );
         Server s = new Sender( r.host, r.dest, r.output, r.config );
@@ -43,7 +47,7 @@ class PerfectLinkTest
         return s;
     }
 
-    protected Server receiver( int id )
+    protected static Server receiver( int id )
     {
         ParserResult r = Main.parseArgs( getArgs( id ) );
         Server s = new Receiver( r.host, r.output );
@@ -51,7 +55,7 @@ class PerfectLinkTest
         return s;
     }
 
-    protected Server droppingSender( int id, Logger.Color color )
+    public static Server droppingSender( int id, Logger.Color color )
     {
         ParserResult r = Main.parseArgs( getArgs( id ) );
         Server s = new DroppingSender( r );
@@ -59,7 +63,7 @@ class PerfectLinkTest
         return s;
     }
 
-    protected Server droppingReceiver( int id )
+    protected static Server droppingReceiver( int id )
     {
         ParserResult r = Main.parseArgs( getArgs( id ) );
         Server s = new DroppingReceiver( r );
@@ -67,15 +71,29 @@ class PerfectLinkTest
         return s;
     }
 
-    protected void hold()
+    protected static void hold( long time )
     {
         try
         {
-            Thread.sleep( 60 * 60 * 1000 );
+            Thread.sleep( time );
         } catch ( InterruptedException e )
         {
             throw new RuntimeException( e );
         }
+    }
+
+    @Test
+    public void perfectLinkTest()
+    {
+        Server s1 = sender( 1, Logger.Color.BLUE );
+        Server s2 = receiver( 2 );
+        Server s3 = sender(3, Logger.Color.GREEN );
+
+        serverTest( s1 );
+        serverTest( s2 );
+        serverTest( s3 );
+
+        hold(60 * 60 * 1000);
     }
 
     @Test
@@ -89,7 +107,7 @@ class PerfectLinkTest
         serverTest( s2 );
         serverTest( s3 );
 
-        hold();
+        hold(60 * 60 * 1000);
     }
 
     @Test
@@ -103,7 +121,7 @@ class PerfectLinkTest
         serverTest( s2 );
         serverTest( s3 );
 
-        hold();
+        hold(60 * 60 * 1000);
     }
 
     @Test
@@ -117,6 +135,6 @@ class PerfectLinkTest
         serverTest( s2 );
         serverTest( s3 );
 
-        hold();
+        hold(60 * 60 * 1000);
     }
 }
