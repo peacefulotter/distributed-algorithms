@@ -1,26 +1,26 @@
-package cs451.perfectlink;
+package cs451.network;
 
 import cs451.Host;
-import cs451.Logger;
+import cs451.utils.FileHandler;
+import cs451.utils.Logger;
+import cs451.utils.Sleeper;
 import cs451.packet.Packet;
 
 import java.io.IOException;
 import java.net.*;
 import java.nio.channels.ClosedChannelException;
 
-abstract public class Server
+public class Server
 {
     private final byte[] buf = new byte[32];
 
+    private final FileHandler handler;
     protected final DatagramSocket socket;
-    protected final FileHandler handler;
     protected final Host host;
-    protected final Timeout timeout;
+    public final Timeout timeout;
 
-    protected boolean closed;
-
-    private Logger.Color color;
     private boolean running;
+    public boolean closed;
 
     public Server( Host host, String output )
     {
@@ -39,25 +39,10 @@ abstract public class Server
         }
 
         this.timeout = new Timeout( this  );
-        log( "Socket connected" );
+        Logger.log( "Socket connected" );
     }
 
-    protected void log( String s )
-    {
-        Logger.log( color, host, s );
-    }
-
-    protected void log( String prefix, String s )
-    {
-        log( "[" + prefix + "] " + s );
-    }
-
-    public void setColor( Logger.Color color )
-    {
-        this.color = color;
-    }
-
-    protected DatagramPacket getIncomingPacket()
+    public DatagramPacket getIncomingPacket()
     {
         try
         {
@@ -66,10 +51,10 @@ abstract public class Server
             return packet;
         }
         catch ( SocketTimeoutException e ) {
-            log( "TimeoutException: " + timeout.get() + "ms");
+            Logger.log( "TimeoutException: " + timeout.get() + "ms");
         }
         catch ( PortUnreachableException | ClosedChannelException e ) {
-            log( e.getMessage() );
+            Logger.log( e.getMessage() );
         }
         catch ( IOException e )
         {
@@ -81,27 +66,33 @@ abstract public class Server
     /**
      * Send a packet to the dest specified by func(dg) or to the connected socket by default
      */
-    protected void sendPacket( Packet packet, DatagramFunc func ) throws IOException
+    public boolean sendPacket( Packet packet, DatagramFunc func )
     {
         DatagramPacket datagram = packet.getDatagram();
         func.setDest( datagram );
-        socket.send( datagram );
+        try
+        {
+            socket.send( datagram );
+        } catch ( IOException e )
+        {
+            terminate( e );
+            return false;
+        }
+        return true;
     }
 
     /**
      * Send a packet to the connected socket
      */
-    protected void sendPacket( Packet packet ) throws IOException
+    public boolean sendPacket( Packet packet )
     {
-        sendPacket( packet, (dg) -> {} );
+        return sendPacket( packet, (dg) -> {} );
     }
-
-    abstract protected boolean runCallback();
 
     public void run()
     {
         running = true;
-        log( "Socket running...");
+        Logger.log( "Socket running...");
 
         while (running && !closed)
         {
@@ -112,16 +103,21 @@ abstract public class Server
         terminate();
     }
 
+    public void register( Packet packet )
+    {
+        handler.register( packet );
+    }
+
     public void terminate( Exception e )
     {
-        log( e.getMessage() );
+        Logger.log( e.getMessage() );
         terminate();
     }
 
     public void terminate()
     {
         if ( closed ) return;
-        log(  "Closing connection" );
+        Logger.log(  "Closing connection" );
         running = false;
         closed = true;
         socket.close();

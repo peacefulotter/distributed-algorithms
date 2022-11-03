@@ -4,11 +4,20 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Logger
 {
     private static final boolean ENABLED = true;
     private static final Clock clock = new HighLevelClock();
+    private static final Map<Long, Color> colorMap = new HashMap<>();
+
+    public static void addColor( Color color )
+    {
+        colorMap.put( Thread.currentThread().getId(), color );
+    }
+
     public enum Color
     {
         RED("\033[31m", "\033[0m"),
@@ -60,11 +69,24 @@ public class Logger
         return LocalTime.now(clock);
     }
 
-    public static void log( Logger.Color color, Host h, String s)
+
+    public static void log( String s )
+    {
+        long id = Thread.currentThread().getId();
+        Color color = colorMap.get( id );
+        log( color, id, s );
+    }
+
+    public static void log( String prefix, String s )
+    {
+        log( "[" + prefix + "] " + s );
+    }
+
+    public static void log( Logger.Color color, long id , String s)
     {
         if ( !ENABLED ) return;
         String c1 = color == null ? "" : color.c1;
         String c2 = color == null ? "" : color.c2;
-        System.out.println(c1 + time() + " " + h + c2 + " " + s);
+        System.out.println(c1 + time() + " " + id + c2 + " " + s);
     }
 }

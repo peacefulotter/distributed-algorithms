@@ -1,4 +1,4 @@
-package cs451.perfectlink;
+package cs451;
 
 public class Sleeper
 {
