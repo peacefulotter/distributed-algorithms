@@ -1,18 +1,21 @@
 package cs451.parser;
 
 import cs451.Host;
-import cs451.perfectlink.PLConfig;
+import cs451.beb.BEConfig;
+
+import java.util.List;
 
 public class ParserResult
 {
-    public final Host host, dest;
+    public final Host host;
+    public final List<Host> hosts;
     public final String output;
-    public final PLConfig config;
+    public final BEConfig config;
 
-    public ParserResult( Host host, Host dest, String output, PLConfig config )
+    public ParserResult( Host host, List<Host> hosts, String output, BEConfig config )
     {
         this.host = host;
-        this.dest = dest;
+        this.hosts = hosts;
         this.output = output;
         this.config = config;
     }
@@ -22,7 +25,7 @@ public class ParserResult
     {
         return "ParserResult{" +
             "host=" + host +
-            ", dest=" + dest +
+            ", hosts='" + hosts + '\'' +
             ", output='" + output + '\'' +
             ", config=" + config +
             '}';

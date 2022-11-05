@@ -1,4 +1,4 @@
-package cs451;
+package cs451.utils;
 
 import java.time.Clock;
 import java.time.Instant;

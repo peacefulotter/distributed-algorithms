@@ -1,2 +1,12 @@
-package cs451.network;public class SeqMsg {
+package cs451.network;
+
+public class SeqMsg
+{
+    public final int seqNr, messages;
+
+    public SeqMsg( int seqNr, int messages )
+    {
+        this.seqNr = seqNr;
+        this.messages = messages;
+    }
 }

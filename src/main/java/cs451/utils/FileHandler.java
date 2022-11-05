@@ -1,4 +1,4 @@
-package cs451.network;
+package cs451.utils;
 
 import cs451.packet.Packet;
 

@@ -7,8 +7,9 @@ import java.util.stream.Collectors;
 public enum PacketTypes
 {
     BROADCAST( 'b', (p, i) -> i + "" ),
-    DELIVER( 'd', (p, i) -> p.getSender() + " " + i ),
-    ACK( 'a', (p, i) -> "" );
+    DELIVER( 'd', (p, i) -> p.getSrc() + " " + i ),
+    ACK( 'a', (p, i) -> "" ),
+    UNKNOWN('u', (p, i) -> "");
 
     private interface PacketLambda
     {
@@ -24,12 +25,22 @@ public enum PacketTypes
         this.lambda = lambda;
     }
 
+    public static PacketTypes parseType( char tag )
+    {
+        for ( PacketTypes type: values() )
+            if ( type.getTag() == tag )
+                return type;
+        return UNKNOWN;
+    }
+
     public List<String> getFileLines( Packet packet )
     {
         return packet.getSeqRange()
             .map( i -> tag + " " + lambda.apply( packet, i ) )
             .collect( Collectors.toList() );
     }
+
+    public char getTag() { return tag; }
 
     @Override
     public String toString()

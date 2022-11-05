@@ -1,46 +1,53 @@
 package cs451.network;
 
 import cs451.Host;
+import cs451.parser.ParserResult;
 import cs451.utils.FileHandler;
 import cs451.utils.Logger;
-import cs451.utils.Sleeper;
 import cs451.packet.Packet;
 
 import java.io.IOException;
 import java.net.*;
 import java.nio.channels.ClosedChannelException;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Server
+public class SocketService
 {
-    private final byte[] buf = new byte[32];
+    private final byte[] buf = new byte[70];
 
     private final FileHandler handler;
+    private final List<Host> hosts;
+
     protected final DatagramSocket socket;
     protected final Host host;
+
+    public final AtomicBoolean closed;
     public final Timeout timeout;
+    public final int id, nbMessages;
 
-    private boolean running;
-    public boolean closed;
-
-    public Server( Host host, String output )
+    public SocketService( ParserResult result )
     {
-        this.host = host;
-        this.handler = new FileHandler( output );
-        this.running = false;
+        this.host = result.host;
+        this.hosts = result.hosts;
+        this.nbMessages = result.config.getM();
 
+        this.id = host.getId();
         try
         {
-            System.out.println(host);
             this.socket = new DatagramSocket( host.getSocketAddress() );
-            closed = false;
         } catch ( SocketException e )
         {
             throw new RuntimeException( e );
         }
 
-        this.timeout = new Timeout( this  );
+        this.handler = new FileHandler( result.output );
+        this.timeout = new Timeout();
+        this.closed = new AtomicBoolean(false);
         Logger.log( "Socket connected" );
     }
+
+    public List<Host> getHosts() { return hosts; }
 
     public DatagramPacket getIncomingPacket()
     {
@@ -63,6 +70,16 @@ public class Server
         return null;
     }
 
+    public boolean setTimeout()
+    {
+        try { socket.setSoTimeout( timeout.get() ); }
+        catch ( SocketException e ) {
+            terminate( e );
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Send a packet to the dest specified by func(dg) or to the connected socket by default
      */
@@ -81,31 +98,9 @@ public class Server
         return true;
     }
 
-    /**
-     * Send a packet to the connected socket
-     */
-    public boolean sendPacket( Packet packet )
-    {
-        return sendPacket( packet, (dg) -> {} );
-    }
-
-    public void run()
-    {
-        running = true;
-        Logger.log( "Socket running...");
-
-        while (running && !closed)
-        {
-            running = runCallback();
-            Sleeper.release();
-        }
-
-        terminate();
-    }
-
     public void register( Packet packet )
     {
-        handler.register( packet );
+        this.handler.register( packet );
     }
 
     public void terminate( Exception e )
@@ -116,11 +111,10 @@ public class Server
 
     public void terminate()
     {
-        if ( closed ) return;
+        if ( closed.get() ) return;
         Logger.log(  "Closing connection" );
-        running = false;
-        closed = true;
-        socket.close();
+        closed.set( true );
         handler.write();
+        socket.close();
     }
 }

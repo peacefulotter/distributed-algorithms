@@ -1,6 +1,10 @@
 package cs451.listener;
 
-public interface ChangeListener<T>
+import cs451.packet.Packet;
+
+import java.net.DatagramPacket;
+
+public interface DeliverListener
 {
-    void actionPerformed( T value );
+    void actionPerformed( DatagramPacket dp, Packet packet );
 }

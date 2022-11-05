@@ -1,4 +1,4 @@
-package cs451.network;
+package cs451.beb;
 
 import java.io.FileInputStream;
 import java.io.IOException;

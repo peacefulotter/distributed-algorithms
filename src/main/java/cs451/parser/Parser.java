@@ -1,6 +1,6 @@
 package cs451.parser;
 
-import cs451.Constants;
+import cs451.utils.Constants;
 
 public class Parser {
 
