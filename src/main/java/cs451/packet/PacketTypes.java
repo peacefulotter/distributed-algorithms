@@ -7,8 +7,7 @@ import java.util.stream.Collectors;
 public enum PacketTypes
 {
     BROADCAST( 'b', (p, i) -> i + "" ),
-    DELIVER( 'd', (p, i) -> p.getSrc() + " " + i ),
-    ACK( 'a', (p, i) -> "" ),
+    ACK( 'd', (p, i) -> p.getSrc() + " " + i ),
     UNKNOWN('u', (p, i) -> "");
 
     private interface PacketLambda

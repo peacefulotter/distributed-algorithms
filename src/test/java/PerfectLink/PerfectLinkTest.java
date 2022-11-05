@@ -4,6 +4,7 @@ import cs451.network.Pool;
 import cs451.Main;
 import cs451.parser.ParserResult;
 import cs451.network.SocketService;
+import cs451.utils.Logger;
 import org.junit.jupiter.api.Test;
 
 class PerfectLinkTest
@@ -12,9 +13,10 @@ class PerfectLinkTest
     // python3 tc.py
     // python3 stress.py -r ../template_java/run.sh -t perfect -l ./output -p 5 -m 250
 
-    protected static void serverTest( SocketService service )
+    protected static void serverTest( SocketService service, Logger.Color color )
     {
         new Thread( () -> {
+            Logger.addColor( color );
             Main.initSignalHandlers( service );
             long t1 = System.nanoTime();
             Pool pool = Main.invokeServer( service );
@@ -75,9 +77,9 @@ class PerfectLinkTest
         SocketService s2 = getService( 2 );
         SocketService s3 = getService( 3 );
 
-        serverTest( s1 );
-        serverTest( s2 );
-        serverTest( s3 );
+        serverTest( s1, Logger.Color.GREEN );
+        serverTest( s2, Logger.Color.RED );
+        serverTest( s3, Logger.Color.BLUE );
 
         hold(60 * 60 * 1000);
     }

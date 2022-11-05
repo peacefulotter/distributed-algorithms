@@ -9,11 +9,16 @@ import cs451.packet.Packet;
 import cs451.utils.Logger;
 import cs451.utils.Sleeper;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 public class BEBSender extends PLSender
 {
+    private final ConcurrentLinkedQueue<Integer> seqBroadcasted;
+
     public BEBSender( SocketService service )
     {
         super( service );
+        this.seqBroadcasted = new ConcurrentLinkedQueue<>();
     }
 
     protected Packet getPacket( Host dest, SeqMsg sm )
@@ -24,7 +29,7 @@ public class BEBSender extends PLSender
     public boolean bebBroadcast( SeqMsg seqMsg )
     {
         boolean sent = true;
-        for ( Host dest: service.getHosts() )
+        for ( Host dest : service.getHosts() )
         {
             Packet packet = getPacket( dest, seqMsg );
             boolean broadcasted = pp2pBroadcast( packet );
@@ -33,31 +38,37 @@ public class BEBSender extends PLSender
         return sent;
     }
 
-    public void onAck( Packet packet )
+    @Override
+    protected void onBroadcast( Packet packet )
     {
-        /*Long time = broadcasted.get( packet );
-        if ( time == null )
+        int seq = packet.getSeqNr();
+        if ( !seqBroadcasted.contains( seq ) )
         {
-            broadcasted.replaceAll( (p, l) -> timeout - System.nanotime().toMS() );
-        }*/
+            seqBroadcasted.add( seq );
+            service.register( packet );
+        }
     }
 
     @Override
     public void run()
     {
-        while ( !service.closed.get() && !queue.isEmpty() )
+        Logger.log( "BEBSender", queue.toString() );
+        int targetAckSize = queue.size() * service.getHosts().size();
+        while (
+            !service.closed.get() &&
+            acknowledgedSize.get() < targetAckSize
+        )
         {
-            if ( packetsToSent.get() > 0 )
+            if ( packetsToSend.get() > 0 )
             {
                 SeqMsg seqMsg = queue.poll();
                 if ( bebBroadcast( seqMsg ) )
-                {
-                    packetsToSent.decrementAndGet();
-                }
+                    packetsToSend.decrementAndGet();
             }
+            System.out.println(acknowledged.size() + " " + acknowledgedSize + " -> " + targetAckSize);
             Sleeper.release();
         }
-        Logger.log("Sender", " Done");
+        Logger.log( "BEBSender", " Done" );
     }
 }
 

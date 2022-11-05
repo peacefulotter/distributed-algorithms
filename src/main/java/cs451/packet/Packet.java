@@ -13,9 +13,8 @@ import java.util.stream.Stream;
 
 public class Packet
 {
-    // TODO refactor: concatenate payloads
-
     private static final String SEPARATOR = "-";
+
     private final PacketTypes type;
     private final Host dest;
     private final int seqNr, src, messages;
@@ -48,6 +47,11 @@ public class Packet
         this.messages = intParse( split[4] );
     }
 
+    public Packet withType( PacketTypes pt )
+    {
+        return new Packet( pt, seqNr, src, dest, messages );
+    }
+
     private int intParse(String m)
     {
         return Integer.parseInt( m.trim() );
@@ -57,9 +61,7 @@ public class Packet
     {
         StringJoiner sj = new StringJoiner( SEPARATOR );
         for ( int i = seqNr; i < seqNr + messages; i++ )
-        {
             sj.add( i + "" );
-        }
         return sj.toString();
     }
 
@@ -70,7 +72,7 @@ public class Packet
             .add( type.getTag() + "" ) // 2 bytes
             .add( seqNr + "" ) // 4 bytes
             .add( src + "" ) // 4 bytes
-            .add( dest + "" ) // 4 bytes
+            .add( getDestId() + "" ) // 4 bytes
             .add( messages + "" ) // 4 bytes
             .add( getPayloads() ) // messages * 4 bytes + messages - 1 (max 39)
             .toString();
@@ -99,7 +101,9 @@ public class Packet
         if ( this == o ) return true;
         if ( o == null || getClass() != o.getClass() ) return false;
         Packet that = (Packet) o;
-        return seqNr == that.seqNr &&
+        return
+            type == that.type &&
+            seqNr == that.seqNr &&
             src == that.src &&
             dest == that.dest &&
             messages == that.messages;
@@ -108,12 +112,16 @@ public class Packet
     @Override
     public int hashCode()
     {
-        return Objects.hash( seqNr, src, dest, messages );
+        return Objects.hash( type, seqNr, src, dest, messages );
     }
 
     @Override
     public String toString()
     {
-        return "type: " + type + "src: " + src + ", dest: " + dest + ", seq_nr: " + seqNr + " messages: " + messages;
+        return "TYPE=" + type +
+            ", SRC=" + src +
+            ", DEST=" + getDestId() +
+            ", SEQ=" + seqNr +
+            ", MSGS=" + messages;
     }
 }

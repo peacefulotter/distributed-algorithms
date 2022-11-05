@@ -1,6 +1,7 @@
 package cs451.network;
 
 import cs451.Host;
+import cs451.packet.PacketTypes;
 import cs451.parser.ParserResult;
 import cs451.utils.FileHandler;
 import cs451.utils.Logger;
@@ -49,13 +50,13 @@ public class SocketService
 
     public List<Host> getHosts() { return hosts; }
 
-    public DatagramPacket getIncomingPacket()
+    public Packet getIncomingPacket()
     {
         try
         {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
-            socket.receive(packet);
-            return packet;
+            socket.receive( packet );
+            return new Packet( packet );
         }
         catch ( SocketTimeoutException e ) {
             Logger.log( "TimeoutException: " + timeout.get() + "ms");
@@ -103,6 +104,11 @@ public class SocketService
         this.handler.register( packet );
     }
 
+    public void registerAck( Packet packet )
+    {
+        register( packet.withType( PacketTypes.ACK ) );
+    }
+
     public void terminate( Exception e )
     {
         Logger.log( e.getMessage() );
@@ -112,7 +118,7 @@ public class SocketService
     public void terminate()
     {
         if ( closed.get() ) return;
-        Logger.log(  "Closing connection" );
+        Logger.log(  "SocketService", "Closing connection" );
         closed.set( true );
         handler.write();
         socket.close();

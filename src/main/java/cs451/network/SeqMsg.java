@@ -9,4 +9,10 @@ public class SeqMsg
         this.seqNr = seqNr;
         this.messages = messages;
     }
+
+    @Override
+    public String toString()
+    {
+        return "(" + seqNr + ", " + messages + ")";
+    }
 }

@@ -12,17 +12,6 @@ public class BEBReceiver extends PLReceiver
         super( service );
     }
 
-    @Override
-    public void onPacket( Packet packet )
-    {
-        // if ( acknowledged.incrementAndGet() >= hosts.size() / 2 )
-        //      done = true;
-
-        // received ACK => send next packet
-        if ( packet.getType() == PacketTypes.ACK )
-        {
-            packetTimeouts.remove( packet );
-            sender.setPacketsToSent( 1 );
-        }
-    }
+    // if ( acknowledged.incrementAndGet() >= hosts.size() / 2 )
+    //      done = true;
 }

@@ -8,15 +8,23 @@ import cs451.packet.Packet;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class PLSender extends SocketHandler
 {
-    protected static final int MAX_MSG_PER_PACKET = 8;
+    // TODO: garbage collection
 
-    protected final ConcurrentLinkedQueue<Packet> broadcasted;
-    protected final AtomicInteger packetsToSent;
+    protected static final int MAX_MSG_PER_PACKET = 8;
+    protected static final int PACKETS_TO_SEND = 3;
+
+    private final Timer timer;
+
+    protected final ConcurrentLinkedQueue<Packet> broadcasted, acknowledged;
+    protected final AtomicInteger acknowledgedSize; // since acknowledged.size() executes in O(n)
+    protected final AtomicInteger packetsToSend;
     protected final Queue<SeqMsg> queue;
     protected final int nbMessages;
 
@@ -26,14 +34,12 @@ public abstract class PLSender extends SocketHandler
     {
         super(service);
         this.nbMessages = service.nbMessages;
+        this.timer = new Timer("Timer");
         this.broadcasted = new ConcurrentLinkedQueue<>();
-        this.packetsToSent = new AtomicInteger(0);
+        this.acknowledged = new ConcurrentLinkedQueue<>();
+        this.acknowledgedSize = new AtomicInteger(0);
+        this.packetsToSend = new AtomicInteger(PACKETS_TO_SEND);
         this.queue = getQueue();
-    }
-
-    public void setPacketsToSent( int nb )
-    {
-        packetsToSent.set( nb );
     }
 
     public void setReceiver( PLReceiver receiver )
@@ -41,22 +47,61 @@ public abstract class PLSender extends SocketHandler
         this.receiver = receiver;
     }
 
+    public void addTimeoutTask( Packet packet )
+    {
+        TimerTask task = new TimerTask() {
+            public void run() {
+                Logger.log(  "Scheduler fired for " + packet );
+                if ( !acknowledged.contains( packet ) )
+                {
+                    pp2pBroadcast( packet );
+                    service.timeout.increase();
+                }
+                cancel();
+            }
+        };
+        timer.schedule( task, service.timeout.get() );
+    }
+
+
+    /**
+     * Called when broadcasting the given packet succeeded, and it is not a retransmit.
+     * Definition can register the packet to the FileHandler
+     */
+    abstract protected void onBroadcast(Packet packet);
+
     public boolean pp2pBroadcast( Packet packet )
     {
-        boolean sent = sendPacket( packet );
-        if ( !sent ) return false;
-        if ( !broadcasted.contains( packet ) ) broadcasted.add( packet );
-        receiver.addPacketTimeout( packet );
-        Logger.log( "PLSender", "Sent packet " + packet + " to " + packet.getDestId() );
+        if ( !sendPacket( packet ) )
+            return false;
+
+        if ( !broadcasted.contains( packet ) )
+        {
+            broadcasted.add( packet );
+            onBroadcast( packet );
+            addTimeoutTask( packet );
+        }
+
+        Logger.log( "Sent packet " + packet );
         return true;
+    }
+
+    public void onAck( Packet packet )
+    {
+        if ( !acknowledged.contains( packet ) )
+        {
+            Logger.log(  "Acknowledged " + packet );
+            acknowledged.add( packet );
+            acknowledgedSize.incrementAndGet();
+            packetsToSend.set(1);
+        }
     }
 
     protected Queue<SeqMsg> getQueue()
     {
-        // TODO: MAX SUBMIT TASKS
         Queue<SeqMsg> queue = new ArrayDeque<>();
         int seqNr;
-        for ( seqNr = 1; seqNr < nbMessages; seqNr += MAX_MSG_PER_PACKET )
+        for ( seqNr = 1; seqNr < nbMessages + 1; seqNr += MAX_MSG_PER_PACKET )
         {
             // try to send a maximum of 8 messages per packet
             int messages = Math.min(MAX_MSG_PER_PACKET, nbMessages - seqNr + 1);
