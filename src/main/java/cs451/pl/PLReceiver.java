@@ -13,7 +13,6 @@ import static cs451.utils.Logger.log;
 
 public class PLReceiver extends SocketHandler
 {
-    // protected final ConcurrentMap<Packet, Integer> packetTimeouts;
     protected final List<Packet> delivered;
 
     protected PLSender sender;
@@ -21,7 +20,6 @@ public class PLReceiver extends SocketHandler
     public PLReceiver( SocketService service )
     {
         super( service );
-        // this.packetTimeouts = new ConcurrentHashMap<>();
         this.delivered = new ArrayList<>();
     }
 
@@ -30,11 +28,6 @@ public class PLReceiver extends SocketHandler
         this.sender = sender;
     }
 
-    /*public void addPacketTimeout( Packet packet )
-    {
-        this.packetTimeouts.put( packet, service.timeout.get() );
-    }
-*/
     protected void sendAck( Packet packet )
     {
         Packet ack = Packet.createACKPacket( packet );
@@ -53,35 +46,9 @@ public class PLReceiver extends SocketHandler
         service.timeout.decrease();
     }
 
-    // TODO: delete?
-    /**
-     * Update the Hashmap of timeouts
-     * and retransmit the packets that waited for more than their TO
-     */
-    /*private void updateTimeouts()
-    {
-        // update
-        packetTimeouts.replaceAll( (p, to) ->
-            to - Math.round( Timeout.time() )
-        );
-        // retransmit
-        packetTimeouts.forEach( (p, to) -> {
-            if ( to <= 0 ) sender.pp2pBroadcast( p );
-        } );
-        packetTimeouts.entrySet()
-            .removeIf( (e) -> e.getValue() <= 0 );
-    }*/
-
     public Packet getPacket()
     {
-        // service.setTimeout();
         Packet packet = service.getIncomingPacket();
-        // updateTimeouts();
-//        if ( dp == null )
-//        {
-//            service.timeout.increase();
-//            return null;
-//        }
         log( "Received : " + packet );
         return packet;
     }
@@ -90,7 +57,6 @@ public class PLReceiver extends SocketHandler
     {
         if ( packet.getType() == PacketTypes.BROADCAST )
         {
-            // packetTimeouts.remove( packet );
             sendAck( packet );
             deliver( packet );
         }
@@ -103,6 +69,7 @@ public class PLReceiver extends SocketHandler
     @Override
     public void run()
     {
+        // TODO: add this?
         // int targetAcknowledgedSize = sender.queue.size();
         // int targetDeliveredSize = targetAcknowledgedSize * service.getNbHosts();
         while ( !service.closed.get() )

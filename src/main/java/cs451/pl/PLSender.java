@@ -25,7 +25,7 @@ public abstract class PLSender extends SocketHandler
     protected final ConcurrentLinkedQueue<Packet> broadcasted, acknowledged;
     protected final AtomicInteger broadcastedSize; // since broadcasted.size() executes in O(n)
     protected final AtomicInteger packetsToSend;
-    protected final Queue<SeqMsg> queue;
+    // protected final Queue<SeqMsg> queue;
     protected final int nbMessages;
 
     protected PLReceiver receiver;
@@ -39,7 +39,7 @@ public abstract class PLSender extends SocketHandler
         this.acknowledged = new ConcurrentLinkedQueue<>();
         this.broadcastedSize = new AtomicInteger(0);
         this.packetsToSend = new AtomicInteger(PACKETS_TO_SEND);
-        this.queue = getQueue();
+        // this.queue = getQueue();
     }
 
     public void setReceiver( PLReceiver receiver )
@@ -98,21 +98,21 @@ public abstract class PLSender extends SocketHandler
         {
             Logger.log(  "Acknowledged " + packet );
             acknowledged.add( packet );
+            // TODO: not a fan of that -> question to TA
             packetsToSend.incrementAndGet();
         }
     }
 
-    protected Queue<SeqMsg> getQueue()
+    protected SeqMsg getFirst()
     {
-        // TODO: getNext(seqNr, nbMessages)
-        Queue<SeqMsg> queue = new ArrayDeque<>();
-        int seqNr;
-        for ( seqNr = 1; seqNr < nbMessages + 1; seqNr += MAX_MSG_PER_PACKET )
-        {
-            // try to send a maximum of 8 messages per packet
-            int messages = Math.min(MAX_MSG_PER_PACKET, nbMessages - seqNr + 1);
-            queue.add( new SeqMsg( seqNr, messages ) );
-        }
-        return queue;
+        int msgs = Math.min( nbMessages, MAX_MSG_PER_PACKET );
+        return new SeqMsg( 1, msgs );
+    }
+
+    protected SeqMsg getNext( int seqNr )
+    {
+        int nextSeq = seqNr + MAX_MSG_PER_PACKET;
+        int nextMsg = Math.min( nbMessages - nextSeq + 1, MAX_MSG_PER_PACKET );
+        return new SeqMsg( nextSeq, nextMsg );
     }
 }
