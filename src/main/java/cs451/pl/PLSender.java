@@ -67,7 +67,7 @@ public abstract class PLSender extends SocketHandler
         };
         timer.schedule( task, service.timeout.get() );
     }
-    
+
     /**
      * Called when broadcasting the given packet succeeded, and it is not a retransmit.
      * Definition can register the packet to the FileHandler
@@ -84,8 +84,9 @@ public abstract class PLSender extends SocketHandler
             broadcasted.add( packet );
             broadcastedSize.incrementAndGet();
             onBroadcast( packet );
-            addTimeoutTask( packet );
         }
+
+        addTimeoutTask( packet );
 
         Logger.log( "Sent packet " + packet );
         return true;
@@ -97,7 +98,7 @@ public abstract class PLSender extends SocketHandler
         {
             Logger.log(  "Acknowledged " + packet );
             acknowledged.add( packet );
-            packetsToSend.set(1);
+            packetsToSend.incrementAndGet();
         }
     }
 
