@@ -23,7 +23,7 @@ public abstract class PLSender extends SocketHandler
     private final Timer timer;
 
     protected final ConcurrentLinkedQueue<Packet> broadcasted, acknowledged;
-    protected final AtomicInteger acknowledgedSize; // since acknowledged.size() executes in O(n)
+    protected final AtomicInteger broadcastedSize; // since broadcasted.size() executes in O(n)
     protected final AtomicInteger packetsToSend;
     protected final Queue<SeqMsg> queue;
     protected final int nbMessages;
@@ -37,7 +37,7 @@ public abstract class PLSender extends SocketHandler
         this.timer = new Timer("Timer");
         this.broadcasted = new ConcurrentLinkedQueue<>();
         this.acknowledged = new ConcurrentLinkedQueue<>();
-        this.acknowledgedSize = new AtomicInteger(0);
+        this.broadcastedSize = new AtomicInteger(0);
         this.packetsToSend = new AtomicInteger(PACKETS_TO_SEND);
         this.queue = getQueue();
     }
@@ -51,8 +51,13 @@ public abstract class PLSender extends SocketHandler
     {
         TimerTask task = new TimerTask() {
             public void run() {
+                // TODO: max try
                 Logger.log(  "Scheduler fired for " + packet );
-                if ( !acknowledged.contains( packet ) )
+                // Logger.log( acknowledged.size() + " - " + acknowledged.toString() );
+                // same packet but different type to do the comparisons in acknowledged.contains
+                Packet ackPacket = Packet.createACKPacket( packet );
+                // Logger.log(ackPacket.toString());
+                if ( !service.closed.get() && !acknowledged.contains( ackPacket ) )
                 {
                     pp2pBroadcast( packet );
                     service.timeout.increase();
@@ -62,8 +67,7 @@ public abstract class PLSender extends SocketHandler
         };
         timer.schedule( task, service.timeout.get() );
     }
-
-
+    
     /**
      * Called when broadcasting the given packet succeeded, and it is not a retransmit.
      * Definition can register the packet to the FileHandler
@@ -78,6 +82,7 @@ public abstract class PLSender extends SocketHandler
         if ( !broadcasted.contains( packet ) )
         {
             broadcasted.add( packet );
+            broadcastedSize.incrementAndGet();
             onBroadcast( packet );
             addTimeoutTask( packet );
         }
@@ -92,13 +97,13 @@ public abstract class PLSender extends SocketHandler
         {
             Logger.log(  "Acknowledged " + packet );
             acknowledged.add( packet );
-            acknowledgedSize.incrementAndGet();
             packetsToSend.set(1);
         }
     }
 
     protected Queue<SeqMsg> getQueue()
     {
+        // TODO: getNext(seqNr, nbMessages)
         Queue<SeqMsg> queue = new ArrayDeque<>();
         int seqNr;
         for ( seqNr = 1; seqNr < nbMessages + 1; seqNr += MAX_MSG_PER_PACKET )

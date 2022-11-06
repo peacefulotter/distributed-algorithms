@@ -6,7 +6,6 @@ import cs451.packet.Packet;
 import cs451.packet.PacketTypes;
 import cs451.utils.Sleeper;
 
-import java.net.DatagramPacket;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -104,12 +103,15 @@ public class PLReceiver extends SocketHandler
     @Override
     public void run()
     {
+        // int targetAcknowledgedSize = sender.queue.size();
+        // int targetDeliveredSize = targetAcknowledgedSize * service.getNbHosts();
         while ( !service.closed.get() )
         {
             Packet packet = getPacket();
             if ( packet != null )
                 onPacket( packet );
             Sleeper.release();
+            // System.out.println("receiver " + delivered.size() + " " + targetDeliveredSize );
         }
     }
 }

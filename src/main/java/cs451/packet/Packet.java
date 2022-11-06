@@ -105,7 +105,7 @@ public class Packet
             type == that.type &&
             seqNr == that.seqNr &&
             src == that.src &&
-            dest == that.dest &&
+            getDestId() == that.getDestId() &&
             messages == that.messages;
     }
 

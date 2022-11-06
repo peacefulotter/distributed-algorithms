@@ -48,6 +48,8 @@ public class SocketService
         Logger.log( "Socket connected" );
     }
 
+    public int getNbHosts() { return hosts.size(); }
+
     public List<Host> getHosts() { return hosts; }
 
     public Packet getIncomingPacket()

@@ -53,10 +53,10 @@ public class BEBSender extends PLSender
     public void run()
     {
         Logger.log( "BEBSender", queue.toString() );
-        int targetAckSize = queue.size() * service.getHosts().size();
+        int packetsToBroadcast = queue.size() * service.getNbHosts();
         while (
             !service.closed.get() &&
-            acknowledgedSize.get() < targetAckSize
+            broadcastedSize.get() < packetsToBroadcast
         )
         {
             if ( packetsToSend.get() > 0 )
@@ -65,7 +65,6 @@ public class BEBSender extends PLSender
                 if ( bebBroadcast( seqMsg ) )
                     packetsToSend.decrementAndGet();
             }
-            System.out.println(acknowledged.size() + " " + acknowledgedSize + " -> " + targetAckSize);
             Sleeper.release();
         }
         Logger.log( "BEBSender", " Done" );
