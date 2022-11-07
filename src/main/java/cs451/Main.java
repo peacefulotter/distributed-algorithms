@@ -2,7 +2,7 @@ package cs451;
 
 import cs451.beb.BEBReceiver;
 import cs451.beb.BEBSender;
-import cs451.beb.BEConfig;
+import cs451.parser.FIFOConfig;
 import cs451.network.*;
 import cs451.parser.HostsParser;
 import cs451.parser.Parser;
@@ -37,7 +37,7 @@ public class Main {
         Parser parser = new Parser(args);
         HostsParser hostsParser = parser.parse();
         List<Host> hosts = hostsParser.getHosts();
-        BEConfig config = new BEConfig( parser.config() );
+        FIFOConfig config = new FIFOConfig( parser.config() );
 
         printDetails( parser );
 

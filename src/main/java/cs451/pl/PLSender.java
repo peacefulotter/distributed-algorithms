@@ -6,8 +6,6 @@ import cs451.network.SocketService;
 import cs451.utils.Logger;
 import cs451.packet.Packet;
 
-import java.util.ArrayDeque;
-import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -15,9 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class PLSender extends SocketHandler
 {
-    // TODO: garbage collection
-
-    protected static final int MAX_MSG_PER_PACKET = 8;
     protected static final int PACKETS_TO_SEND = 3;
 
     private final Timer timer;
@@ -25,7 +20,6 @@ public abstract class PLSender extends SocketHandler
     protected final ConcurrentLinkedQueue<Packet> broadcasted, acknowledged;
     protected final AtomicInteger broadcastedSize; // since broadcasted.size() executes in O(n)
     protected final AtomicInteger packetsToSend;
-    // protected final Queue<SeqMsg> queue;
     protected final int nbMessages;
 
     protected PLReceiver receiver;
@@ -39,7 +33,6 @@ public abstract class PLSender extends SocketHandler
         this.acknowledged = new ConcurrentLinkedQueue<>();
         this.broadcastedSize = new AtomicInteger(0);
         this.packetsToSend = new AtomicInteger(PACKETS_TO_SEND);
-        // this.queue = getQueue();
     }
 
     public void setReceiver( PLReceiver receiver )
@@ -51,12 +44,9 @@ public abstract class PLSender extends SocketHandler
     {
         TimerTask task = new TimerTask() {
             public void run() {
-                // TODO: max try
                 Logger.log(  "Scheduler fired for " + packet );
-                // Logger.log( acknowledged.size() + " - " + acknowledged.toString() );
                 // same packet but different type to do the comparisons in acknowledged.contains
                 Packet ackPacket = Packet.createACKPacket( packet );
-                // Logger.log(ackPacket.toString());
                 if ( !service.closed.get() && !acknowledged.contains( ackPacket ) )
                 {
                     pp2pBroadcast( packet );
@@ -92,27 +82,26 @@ public abstract class PLSender extends SocketHandler
         return true;
     }
 
+    /**
+     * Can be redefined by children to execute some additional steps
+     *  when receiving an ACK packet
+     */
+    protected void onAcknowledged( Packet packet ) {
+        acknowledged.add( packet );
+        // FIXME: garbage collection needed
+        broadcasted.remove( Packet.createBRCPacket( packet ) );
+        // FIXME: acknowledged GC needed? -> /!\ replay packets
+
+        // FIXME: not a fan of that -> question to TA
+        packetsToSend.incrementAndGet();
+    }
+
     public void onAck( Packet packet )
     {
         if ( !acknowledged.contains( packet ) )
         {
             Logger.log(  "Acknowledged " + packet );
-            acknowledged.add( packet );
-            // TODO: not a fan of that -> question to TA
-            packetsToSend.incrementAndGet();
+            onAcknowledged( packet );
         }
-    }
-
-    protected SeqMsg getFirst()
-    {
-        int msgs = Math.min( nbMessages, MAX_MSG_PER_PACKET );
-        return new SeqMsg( 1, msgs );
-    }
-
-    protected SeqMsg getNext( int seqNr )
-    {
-        int nextSeq = seqNr + MAX_MSG_PER_PACKET;
-        int nextMsg = Math.min( nbMessages - nextSeq + 1, MAX_MSG_PER_PACKET );
-        return new SeqMsg( nextSeq, nextMsg );
     }
 }

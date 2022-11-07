@@ -9,7 +9,4 @@ public class BEBReceiver extends PLReceiver
     {
         super( service );
     }
-
-    // if ( acknowledged.incrementAndGet() >= hosts.size() / 2 )
-    //      done = true;
 }

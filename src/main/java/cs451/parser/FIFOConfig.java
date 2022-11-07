@@ -1,15 +1,15 @@
-package cs451.beb;
+package cs451.parser;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-public class BEConfig
+public class FIFOConfig
 {
     private final int m;
 
-    public BEConfig( String path )
+    public FIFOConfig( String path )
     {
         try ( InputStream stream = new FileInputStream( path ) )
         {

@@ -52,11 +52,12 @@ public class BEBSender extends PLSender
     @Override
     public void run()
     {
-        int nbSequences = nbMessages / MAX_MSG_PER_PACKET + ((nbMessages % MAX_MSG_PER_PACKET > 0) ? 1 : 0);
+        int max = SeqMsg.MAX_MSG_PER_PACKET;
+        int nbSequences = nbMessages / max + ((nbMessages % max > 0) ? 1 : 0);
         int packetsToBroadcast = nbSequences * service.getNbHosts();
         Logger.log( "BEBSender", nbSequences + " " + packetsToBroadcast );
 
-        SeqMsg seqMsg = getFirst();
+        SeqMsg seqMsg = SeqMsg.getFirst( nbMessages );
         while (
             !service.closed.get() &&
             broadcastedSize.get() < packetsToBroadcast
@@ -66,7 +67,7 @@ public class BEBSender extends PLSender
             {
                 if ( bebBroadcast( seqMsg ) )
                     packetsToSend.decrementAndGet();
-                seqMsg = getNext( seqMsg.seqNr );
+                seqMsg = seqMsg.getNext( nbMessages );
             }
             Sleeper.release();
         }

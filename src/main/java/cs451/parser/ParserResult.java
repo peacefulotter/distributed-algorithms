@@ -1,7 +1,6 @@
 package cs451.parser;
 
 import cs451.Host;
-import cs451.beb.BEConfig;
 
 import java.util.List;
 
@@ -10,9 +9,9 @@ public class ParserResult
     public final Host host;
     public final List<Host> hosts;
     public final String output;
-    public final BEConfig config;
+    public final FIFOConfig config;
 
-    public ParserResult( Host host, List<Host> hosts, String output, BEConfig config )
+    public ParserResult( Host host, List<Host> hosts, String output, FIFOConfig config )
     {
         this.host = host;
         this.hosts = hosts;

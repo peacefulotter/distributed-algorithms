@@ -28,12 +28,27 @@ public class Packet
         this.messages = messages;
     }
 
-    // inverse the src and dest from the given packet
-    public static Packet createACKPacket( Packet packet )
+    private static Packet inverseDirection( PacketTypes type, Packet packet )
     {
         int src = packet.getDestId();
         Host dest = Host.findById.get( packet.getSrc() );
-        return new Packet( PacketTypes.ACK, packet.getSeqNr(), src, dest, packet.getMessages() );
+        return new Packet( type, packet.getSeqNr(), src, dest, packet.getMessages() );
+    }
+
+    /**
+     * Inverse direction and returns an ACK packet
+     */
+    public static Packet createACKPacket( Packet packet )
+    {
+        return inverseDirection( PacketTypes.ACK, packet );
+    }
+
+    /**
+     * Inverse direction and returns a BROADCAST packet
+     */
+    public static Packet createBRCPacket( Packet packet )
+    {
+        return inverseDirection( PacketTypes.BROADCAST, packet );
     }
 
     public Packet( DatagramPacket from )
