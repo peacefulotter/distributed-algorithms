@@ -46,6 +46,11 @@ public class PLReceiver extends SocketHandler
         service.timeout.decrease();
     }
 
+    public void onBroadcast( Packet packet )
+    {
+        deliver(packet);
+    }
+
     public Packet getPacket()
     {
         Packet packet = service.getIncomingPacket();
@@ -55,14 +60,14 @@ public class PLReceiver extends SocketHandler
 
     public void onPacket( Packet packet )
     {
-        if ( packet.getType() == PacketTypes.BROADCAST )
+        if ( packet.getType() == PacketTypes.BRC )
         {
             sendAck( packet );
-            deliver( packet );
+            onBroadcast( packet );
         }
         else if ( packet.getType() == PacketTypes.ACK )
         {
-            sender.onAck( packet );
+            sender.onAcknowledge( packet );
         }
     }
 

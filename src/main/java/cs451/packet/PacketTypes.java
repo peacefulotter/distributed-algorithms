@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 public enum PacketTypes
 {
-    BROADCAST( 'b', (p, i) -> i + "" ),
+    BRC( 'b', ( p, i) -> i + "" ),
     ACK( 'd', (p, i) -> p.getSrc() + " " + i ),
     UNKNOWN('u', (p, i) -> "");
 

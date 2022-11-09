@@ -1,6 +1,5 @@
 package cs451.pl;
 
-import cs451.network.SeqMsg;
 import cs451.network.SocketHandler;
 import cs451.network.SocketService;
 import cs451.utils.Logger;
@@ -17,21 +16,18 @@ public abstract class PLSender extends SocketHandler
 
     private final Timer timer;
 
+    // TODO: GC of acknowledged
     protected final ConcurrentLinkedQueue<Packet> broadcasted, acknowledged;
-    protected final AtomicInteger broadcastedSize; // since broadcasted.size() executes in O(n)
     protected final AtomicInteger packetsToSend;
-    protected final int nbMessages;
 
     protected PLReceiver receiver;
 
     public PLSender( SocketService service )
     {
         super(service);
-        this.nbMessages = service.nbMessages;
         this.timer = new Timer("Timer");
         this.broadcasted = new ConcurrentLinkedQueue<>();
         this.acknowledged = new ConcurrentLinkedQueue<>();
-        this.broadcastedSize = new AtomicInteger(0);
         this.packetsToSend = new AtomicInteger(PACKETS_TO_SEND);
     }
 
@@ -72,7 +68,6 @@ public abstract class PLSender extends SocketHandler
         if ( !broadcasted.contains( packet ) )
         {
             broadcasted.add( packet );
-            broadcastedSize.incrementAndGet();
             onBroadcast( packet );
         }
 
@@ -86,22 +81,17 @@ public abstract class PLSender extends SocketHandler
      * Can be redefined by children to execute some additional steps
      *  when receiving an ACK packet
      */
-    protected void onAcknowledged( Packet packet ) {
-        acknowledged.add( packet );
-        // FIXME: garbage collection needed
-        broadcasted.remove( Packet.createBRCPacket( packet ) );
-        // FIXME: acknowledged GC needed? -> /!\ replay packets
-
-        // FIXME: not a fan of that -> question to TA
-        packetsToSend.incrementAndGet();
-    }
-
-    public void onAck( Packet packet )
+    protected void onAcknowledge( Packet packet )
     {
-        if ( !acknowledged.contains( packet ) )
-        {
-            Logger.log(  "Acknowledged " + packet );
-            onAcknowledged( packet );
-        }
+        if ( acknowledged.contains( packet ) )
+            return;
+
+        Logger.log(  "Acknowledged " + packet );
+
+        acknowledged.add( packet );
+        broadcasted.remove( Packet.createBRCPacket( packet ) );
+
+        // TODO: not a fan of that
+        packetsToSend.incrementAndGet();
     }
 }

@@ -1,8 +1,7 @@
 package cs451.beb;
 
 import cs451.Host;
-import cs451.network.SeqMsg;
-import cs451.packet.PacketTypes;
+import cs451.packet.Message;
 import cs451.pl.PLSender;
 import cs451.network.SocketService;
 import cs451.packet.Packet;
@@ -13,25 +12,27 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class BEBSender extends PLSender
 {
+    private final ConcurrentLinkedQueue<Message> messages;
     private final ConcurrentLinkedQueue<Integer> seqBroadcasted;
 
     public BEBSender( SocketService service )
     {
         super( service );
+        this.messages = new ConcurrentLinkedQueue<>();
         this.seqBroadcasted = new ConcurrentLinkedQueue<>();
     }
 
-    protected Packet getPacket( Host dest, SeqMsg sm )
+    public boolean broadcast( Message msg )
     {
-        return new Packet( PacketTypes.BROADCAST, sm.seqNr, service.id, dest, sm.messages );
+        return bebBroadcast( msg );
     }
 
-    public boolean bebBroadcast( SeqMsg seqMsg )
+    public boolean bebBroadcast( Message msg )
     {
         boolean sent = true;
         for ( Host dest : service.getHosts() )
         {
-            Packet packet = getPacket( dest, seqMsg );
+            Packet packet = new Packet( msg, dest );
             boolean broadcasted = pp2pBroadcast( packet );
             sent = sent && broadcasted;
         }
@@ -49,25 +50,27 @@ public class BEBSender extends PLSender
         }
     }
 
+    public void addMessageQueue( Message msg )
+    {
+        this.messages.add( msg );
+    }
+
     @Override
     public void run()
     {
-        int max = SeqMsg.MAX_MSG_PER_PACKET;
-        int nbSequences = nbMessages / max + ((nbMessages % max > 0) ? 1 : 0);
-        int packetsToBroadcast = nbSequences * service.getNbHosts();
-        Logger.log( "BEBSender", nbSequences + " " + packetsToBroadcast );
-
-        SeqMsg seqMsg = SeqMsg.getFirst( nbMessages );
-        while (
-            !service.closed.get() &&
-            broadcastedSize.get() < packetsToBroadcast
-        )
+        Message msg = Message.getFirst( service );
+        while ( !service.closed.get() )
         {
-            if ( packetsToSend.get() > 0 )
+            Logger.log( messages );
+            Message fromQueue = messages.poll();
+            if ( fromQueue != null )
+                bebBroadcast( fromQueue );
+
+            else if ( packetsToSend.get() > 0 && msg.seq <= service.nbMessages )
             {
-                if ( bebBroadcast( seqMsg ) )
+                if ( broadcast( msg ) )
                     packetsToSend.decrementAndGet();
-                seqMsg = seqMsg.getNext( nbMessages );
+                msg = msg.getNext( service );
             }
             Sleeper.release();
         }

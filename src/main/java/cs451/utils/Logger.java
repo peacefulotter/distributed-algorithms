@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class Logger
 {
-    private static final boolean ENABLED = true;
+    private static final boolean ENABLED = false;
     private static final Clock clock = new HighLevelClock();
     private static final Map<Long, Color> colorMap = new HashMap<>();
 
@@ -70,23 +70,23 @@ public class Logger
     }
 
 
-    public static void log( String s )
+    public static void log( Object o )
     {
         long id = Thread.currentThread().getId();
         Color color = colorMap.get( id );
-        log( color, id, s );
+        log( color, id, o );
     }
 
-    public static void log( String prefix, String s )
+    public static void log( String prefix, Object o )
     {
-        log( "[" + prefix + "] " + s );
+        log( "[" + prefix + "] " + o );
     }
 
-    public static void log( Logger.Color color, long id , String s)
+    public static void log( Logger.Color color, long id , Object o)
     {
         if ( !ENABLED ) return;
         String c1 = color == null ? "" : color.c1;
         String c2 = color == null ? "" : color.c2;
-        System.out.println(c1 + time() + " " + id + c2 + " " + s);
+        System.out.println(c1 + time() + " " + id + c2 + " " + o);
     }
 }

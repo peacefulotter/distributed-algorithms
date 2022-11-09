@@ -44,7 +44,7 @@ public class QueueTest
                 SeqMsg sm = q.poll();
                 if ( !sm.equals( prev ) )
                     throw new RuntimeException("dif");
-                seq = sm.seqNr;
+                seq = sm.seq;
                 prev = getNext( seq, i );
             }
         }

@@ -19,7 +19,7 @@ class PerfectLinkTest
             Logger.addColor( color );
             Main.initSignalHandlers( service );
             long t1 = System.nanoTime();
-            Pool pool = Main.invokeServer( service );
+            Pool pool = Main.invokeBEBServer( service );
             pool.start();
             long t2 = System.nanoTime();
             long delta = (t2 - t1) / 1000000;

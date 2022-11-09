@@ -73,16 +73,6 @@ public class SocketService
         return null;
     }
 
-    public boolean setTimeout()
-    {
-        try { socket.setSoTimeout( timeout.get() ); }
-        catch ( SocketException e ) {
-            terminate( e );
-            return false;
-        }
-        return true;
-    }
-
     /**
      * Send a packet to the dest specified by func(dg) or to the connected socket by default
      */

@@ -1,10 +1,12 @@
 package cs451.packet;
 
 import cs451.Host;
+import cs451.utils.Logger;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -17,22 +19,28 @@ public class Packet
 
     private final PacketTypes type;
     private final Host dest;
-    private final int seqNr, src, messages;
+    private final int seqNr, origin, src, messages;
 
-    public Packet( PacketTypes type, int seqNr, int src, Host dest, int messages )
+    public Packet( PacketTypes type, int seqNr, int origin, int src, Host dest, int messages )
     {
         this.type = type;
         this.seqNr = seqNr;
+        this.origin = origin;
         this.src = src;
         this.dest = dest;
         this.messages = messages;
+    }
+
+    public Packet( Message msg, Host dest )
+    {
+        this( msg.type, msg.seq, msg.origin, msg.src, dest, msg.messages );
     }
 
     private static Packet inverseDirection( PacketTypes type, Packet packet )
     {
         int src = packet.getDestId();
         Host dest = Host.findById.get( packet.getSrc() );
-        return new Packet( type, packet.getSeqNr(), src, dest, packet.getMessages() );
+        return new Packet( type, packet.getSeqNr(), packet.getOrigin(), src, dest, packet.getMessages() );
     }
 
     /**
@@ -44,32 +52,38 @@ public class Packet
     }
 
     /**
-     * Inverse direction and returns a BROADCAST packet
+     * Inverse direction and returns a BRC packet
      */
     public static Packet createBRCPacket( Packet packet )
     {
-        return inverseDirection( PacketTypes.BROADCAST, packet );
+        return inverseDirection( PacketTypes.BRC, packet );
     }
 
     public Packet( DatagramPacket from )
     {
-        String msg = new String( from.getData() );
+        String msg = new String( from.getData() ).trim();
         String[] split = msg.split( SEPARATOR );
         this.type = PacketTypes.parseType( msg.charAt( 0 ) );
-        this.seqNr = intParse( split[1] );
-        this.src = intParse( split[2] );
-        this.dest = Host.findById.get( intParse( split[3] ) );
-        this.messages = intParse( split[4] );
+        this.seqNr = Integer.parseInt( split[1] );
+        this.origin = Integer.parseInt( split[2] );
+        this.src = Integer.parseInt( split[3] );
+        this.dest = Host.findById.get( Integer.parseInt( split[4] ) );
+        this.messages = Integer.parseInt( split[5] );
+    }
+
+    public static Packet createUnknown()
+    {
+        return new Packet( PacketTypes.UNKNOWN, 0, 0, 0, null, 0 );
     }
 
     public Packet withType( PacketTypes pt )
     {
-        return new Packet( pt, seqNr, src, dest, messages );
+        return new Packet( pt, seqNr, origin, src, dest, messages );
     }
 
-    private int intParse(String m)
+    public int getIndex()
     {
-        return Integer.parseInt( m.trim() );
+        return seqNr % Message.MAX;
     }
 
     private String getPayloads()
@@ -82,10 +96,11 @@ public class Packet
 
     public DatagramPacket getDatagram()
     {
-        // total max: 70
+        // total max: 74
         String payload = new StringJoiner( SEPARATOR ) // messages + 5 (max 13)
             .add( type.getTag() + "" ) // 2 bytes
             .add( seqNr + "" ) // 4 bytes
+            .add( origin + "" ) // 4 bytes
             .add( src + "" ) // 4 bytes
             .add( getDestId() + "" ) // 4 bytes
             .add( messages + "" ) // 4 bytes
@@ -98,6 +113,7 @@ public class Packet
 
     public PacketTypes getType() { return type; }
     public int getSeqNr() { return seqNr; }
+    public int getOrigin() { return origin; }
     public int getSrc() { return src; }
     public int getDestId() { return dest.getId(); }
     public int getDestPort() { return dest.getPort(); }
@@ -127,13 +143,14 @@ public class Packet
     @Override
     public int hashCode()
     {
-        return Objects.hash( type, seqNr, src, dest, messages );
+        return Objects.hash( type, seqNr, origin, src, dest, messages );
     }
 
     @Override
     public String toString()
     {
         return "TYPE=" + type +
+            ", ORIG=" + origin +
             ", SRC=" + src +
             ", DEST=" + getDestId() +
             ", SEQ=" + seqNr +

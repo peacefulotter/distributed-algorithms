@@ -9,6 +9,8 @@ import cs451.parser.Parser;
 import cs451.parser.ParserResult;
 import cs451.pl.PLReceiver;
 import cs451.pl.PLSender;
+import cs451.urb.URBReceiver;
+import cs451.urb.URBSender;
 
 import java.util.List;
 
@@ -50,10 +52,17 @@ public class Main {
         return res;
     }
 
-    public static Pool invokeServer( SocketService service )
+    public static Pool invokeBEBServer( SocketService service )
     {
         PLSender sender = new BEBSender( service );
         PLReceiver receiver = new BEBReceiver( service );
+        return Pool.getPool( sender, receiver );
+    }
+
+    public static Pool invokeURBServer( SocketService service )
+    {
+        PLSender sender = new URBSender( service );
+        PLReceiver receiver = new URBReceiver( service );
         return Pool.getPool( sender, receiver );
     }
 
@@ -61,7 +70,7 @@ public class Main {
     {
         ParserResult result = parseArgs( args );
         SocketService service = new SocketService( result );
-        Pool pool = invokeServer( service );
+        Pool pool = invokeURBServer( service );
         initSignalHandlers( service );
         pool.start();
     }
