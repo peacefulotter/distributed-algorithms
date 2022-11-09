@@ -71,19 +71,22 @@ public class Packet
         this.messages = Integer.parseInt( split[5] );
     }
 
-    public static Packet createUnknown()
-    {
-        return new Packet( PacketTypes.UNKNOWN, 0, 0, 0, null, 0 );
-    }
-
     public Packet withType( PacketTypes pt )
     {
         return new Packet( pt, seqNr, origin, src, dest, messages );
     }
 
+    public Packet getRelay()
+    {
+        return new Packet( type, seqNr, origin, origin, dest, messages );
+    }
+
+    /**
+     * converts the seqNr into the packet index
+     */
     public int getIndex()
     {
-        return seqNr % Message.MAX;
+        return seqNr / Message.MAX;
     }
 
     private String getPayloads()

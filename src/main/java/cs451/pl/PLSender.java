@@ -28,7 +28,7 @@ public abstract class PLSender extends SocketHandler
         this.timer = new Timer("Timer");
         this.broadcasted = new ConcurrentLinkedQueue<>();
         this.acknowledged = new ConcurrentLinkedQueue<>();
-        this.packetsToSend = new AtomicInteger(PACKETS_TO_SEND);
+        this.packetsToSend = new AtomicInteger(PACKETS_TO_SEND * service.getNbHosts());
     }
 
     public void setReceiver( PLReceiver receiver )
@@ -58,18 +58,27 @@ public abstract class PLSender extends SocketHandler
      * Called when broadcasting the given packet succeeded, and it is not a retransmit.
      * Definition can register the packet to the FileHandler
      */
-    abstract protected void onBroadcast(Packet packet);
+    protected boolean onBroadcast(Packet packet)
+    {
+        if ( broadcasted.contains( packet ) )
+            return false;
+
+        broadcasted.add( packet );
+        return true;
+    }
+
+    protected void onNewBroadcast( Packet packet )
+    {
+        service.register( packet );
+    }
 
     public boolean pp2pBroadcast( Packet packet )
     {
         if ( !sendPacket( packet ) )
             return false;
 
-        if ( !broadcasted.contains( packet ) )
-        {
-            broadcasted.add( packet );
-            onBroadcast( packet );
-        }
+        if ( onBroadcast( packet ) )
+            onNewBroadcast( packet );
 
         addTimeoutTask( packet );
 

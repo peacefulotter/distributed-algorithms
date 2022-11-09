@@ -2,6 +2,8 @@ package cs451;
 
 import cs451.beb.BEBReceiver;
 import cs451.beb.BEBSender;
+import cs451.fifo.FIFOReceiver;
+import cs451.fifo.FIFOSender;
 import cs451.parser.FIFOConfig;
 import cs451.network.*;
 import cs451.parser.HostsParser;
@@ -66,11 +68,18 @@ public class Main {
         return Pool.getPool( sender, receiver );
     }
 
+    public static Pool invokeFIFOServer( SocketService service )
+    {
+        PLSender sender = new FIFOSender( service );
+        PLReceiver receiver = new FIFOReceiver( service );
+        return Pool.getPool( sender, receiver );
+    }
+
     public static void main(String[] args)
     {
         ParserResult result = parseArgs( args );
         SocketService service = new SocketService( result );
-        Pool pool = invokeURBServer( service );
+        Pool pool = invokeFIFOServer( service );
         initSignalHandlers( service );
         pool.start();
     }

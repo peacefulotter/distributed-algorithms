@@ -12,14 +12,14 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class BEBSender extends PLSender
 {
+    // TODO: 16Mb per process
+
     private final ConcurrentLinkedQueue<Message> messages;
-    private final ConcurrentLinkedQueue<Integer> seqBroadcasted;
 
     public BEBSender( SocketService service )
     {
         super( service );
         this.messages = new ConcurrentLinkedQueue<>();
-        this.seqBroadcasted = new ConcurrentLinkedQueue<>();
     }
 
     public boolean broadcast( Message msg )
@@ -30,24 +30,26 @@ public class BEBSender extends PLSender
     public boolean bebBroadcast( Message msg )
     {
         boolean sent = true;
+        Packet packet = null;
         for ( Host dest : service.getHosts() )
         {
-            Packet packet = new Packet( msg, dest );
+            packet = new Packet( msg, dest );
             boolean broadcasted = pp2pBroadcast( packet );
             sent = sent && broadcasted;
         }
+
+        if ( sent )
+            super.onNewBroadcast( packet );
+
         return sent;
     }
 
     @Override
-    protected void onBroadcast( Packet packet )
+    protected void onNewBroadcast( Packet packet )
     {
-        int seq = packet.getSeqNr();
-        if ( !seqBroadcasted.contains( seq ) )
-        {
-            seqBroadcasted.add( seq );
-            service.register( packet );
-        }
+        // Override it to avoid registering multiple time the same broadcast packet
+        // instead call super.onNewBroadcast ONCE at the end of bebBroadcast
+        // to register the broadcast packet once
     }
 
     public void addMessageQueue( Message msg )
@@ -58,18 +60,22 @@ public class BEBSender extends PLSender
     @Override
     public void run()
     {
+        int nbHosts = service.getNbHosts();
         Message msg = Message.getFirst( service );
         while ( !service.closed.get() )
         {
-            Logger.log( messages );
+            Logger.log( "BEBSender", messages );
             Message fromQueue = messages.poll();
             if ( fromQueue != null )
-                bebBroadcast( fromQueue );
+                bebBroadcast( fromQueue ); // TODO: later - not BEB
 
-            else if ( packetsToSend.get() > 0 && msg.seq <= service.nbMessages )
+            else if (
+                packetsToSend.get() >= nbHosts &&
+                msg.seq <= service.nbMessages &&
+                broadcast( msg )
+            )
             {
-                if ( broadcast( msg ) )
-                    packetsToSend.decrementAndGet();
+                packetsToSend.addAndGet( -nbHosts );
                 msg = msg.getNext( service );
             }
             Sleeper.release();

@@ -46,7 +46,7 @@ public class Timeout
         Logger.log(PREFIX, "Decreasing to " + timeout);
     }
 
-    private static long toMs(long ns)
+    public static long toMs(long ns)
     {
         return ns / 1000000;
     }

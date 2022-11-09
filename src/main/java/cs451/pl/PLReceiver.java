@@ -43,10 +43,13 @@ public class PLReceiver extends SocketHandler
         log( "Delivering : " + packet );
         delivered.add( packet );
         service.registerAck( packet );
+        // todo: TIMEOUT decrease elsewhere because of fifo
+        // todo: that can queue many packets
+        // todo: decrease onReceiveBroadcast()?
         service.timeout.decrease();
     }
 
-    public void onBroadcast( Packet packet )
+    public void onReceiveBroadcast( Packet packet )
     {
         deliver(packet);
     }
@@ -63,7 +66,7 @@ public class PLReceiver extends SocketHandler
         if ( packet.getType() == PacketTypes.BRC )
         {
             sendAck( packet );
-            onBroadcast( packet );
+            onReceiveBroadcast( packet );
         }
         else if ( packet.getType() == PacketTypes.ACK )
         {

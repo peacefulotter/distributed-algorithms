@@ -1,6 +1,8 @@
 package cs451.utils;
 
+import cs451.Host;
 import cs451.packet.Packet;
+import cs451.parser.FIFOConfig;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -32,11 +34,16 @@ public class FileHandler
         {
             throw new RuntimeException( e );
         }
+        Stopwatch.init();
     }
 
     public void register( Packet p )
     {
         messages.addAll( p.getFileLines() );
+
+        // TODO: remove
+        if ( messages.size() > FIFOConfig.m * Host.findById.size() )
+            Stopwatch.stop();
     }
 
     /**

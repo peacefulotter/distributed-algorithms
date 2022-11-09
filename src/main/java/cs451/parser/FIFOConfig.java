@@ -7,7 +7,7 @@ import java.nio.charset.StandardCharsets;
 
 public class FIFOConfig
 {
-    private final int m;
+    public static int m = 0;
 
     public FIFOConfig( String path )
     {

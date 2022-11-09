@@ -3,6 +3,7 @@ package cs451.urb;
 import cs451.beb.BEBReceiver;
 import cs451.network.SocketService;
 import cs451.packet.Packet;
+import cs451.utils.Logger;
 import cs451.utils.Pair;
 
 import java.util.ArrayList;
@@ -31,28 +32,34 @@ public class URBReceiver extends BEBReceiver
 
     private boolean hasMajority( List<Integer> processes )
     {
-        return processes.size() > service.getNbHosts() / 2;
+        return processes.size() > Math.floor( service.getNbHosts() / 2f );
+    }
+
+    private void deliverRelay( Packet p )
+    {
+        Logger.log("URBReceiver", "Delivering relay " + p.getRelay() );
+        deliver( p.getRelay() );
     }
 
     private void onRelay( Pair<Integer, Integer> p, Packet packet )
     {
         Integer src = packet.getSrc();
 
-        System.out.println(majority);
-
         List<Integer> processes = majority.get( p );
-        if ( processes.contains( src ) || hasMajority( processes ) )
+        if ( processes.contains( src ) )
             return;
+        else if ( hasMajority( processes ) )
+            deliverRelay( packet );
 
         processes.add( src );
         majority.put( p, processes );
 
         if ( hasMajority( processes ) )
-            deliver( packet );
+            deliverRelay( packet );
     }
 
     @Override
-    public void onBroadcast( Packet packet )
+    public void onReceiveBroadcast( Packet packet )
     {
         Pair<Integer, Integer> p = Pair.fromPacket( packet );
         if ( majority.containsKey( p ) )

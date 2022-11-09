@@ -12,6 +12,9 @@ class PerfectLinkTest
     // ../template_java/build.sh
     // python3 tc.py
     // python3 stress.py -r ../template_java/run.sh -t perfect -l ./output -p 5 -m 250
+    // python3 stress.py -r ../template_java/run.sh -t fifo -l ./output -p 3 -m 25
+    // python3 stress.py -r ../template_java/run.sh -t fifo -l ./output -p 5 -m 500
+    // python3 validate_fifo.py --proc_num 5 --output ./output/
 
     protected static void serverTest( SocketService service, Logger.Color color )
     {
