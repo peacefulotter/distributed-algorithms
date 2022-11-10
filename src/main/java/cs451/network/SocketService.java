@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.channels.ClosedChannelException;
 import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SocketService
@@ -82,7 +80,12 @@ public class SocketService
         try
         {
             socket.send( datagram );
-        } catch ( IOException e )
+        }
+        catch ( PortUnreachableException e )
+        {
+            return false;
+        }
+        catch ( IOException e )
         {
             terminate( e );
             return false;
@@ -95,7 +98,7 @@ public class SocketService
         this.handler.register( packet );
     }
 
-    public void registerAck( Packet packet )
+    public void registerDeliver( Packet packet )
     {
         register( packet.withType( PacketTypes.ACK ) );
     }

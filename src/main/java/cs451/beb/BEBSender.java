@@ -22,27 +22,23 @@ public class BEBSender extends PLSender
         this.messages = new ConcurrentLinkedQueue<>();
     }
 
-    public boolean broadcast( Message msg )
+    public void broadcast( Message msg )
     {
-        return bebBroadcast( msg );
+        bebBroadcast( msg );
     }
 
-    public boolean bebBroadcast( Message msg )
+    public void bebBroadcast( Message msg )
     {
-        boolean sent = true;
         Packet packet = null;
         for ( Host dest : service.getHosts() )
         {
             packet = new Packet( msg, dest );
-            boolean broadcasted = pp2pBroadcast( packet );
-            sent = sent && broadcasted;
+            pp2pBroadcast( packet );
         }
 
         // if successfully sent and it's not a relay
-        if ( sent && packet != null && packet.getOrigin() == packet.getSrc() )
+        if ( packet != null && packet.getOrigin() == packet.getSrc() )
             super.onNewBroadcast( packet );
-
-        return sent;
     }
 
     // Override it to avoid registering multiple time the same broadcast packet
@@ -74,10 +70,10 @@ public class BEBSender extends PLSender
 
             else if (
                 packetsToSend.get() >= nbHosts &&
-                msg.seq <= service.nbMessages &&
-                broadcast( msg )
+                msg.seq <= service.nbMessages
             )
             {
+                broadcast( msg );
                 packetsToSend.addAndGet( -nbHosts );
                 msg = msg.getNext( service );
             }

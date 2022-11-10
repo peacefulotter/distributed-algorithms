@@ -16,7 +16,7 @@ public abstract class PLSender extends SocketHandler
 
     private final Timer timer;
 
-    // TODO: GC of acknowledged
+    // TODO: to Map + GC of acknowledged
     protected final ConcurrentLinkedQueue<Packet> broadcasted, acknowledged;
     protected final AtomicInteger packetsToSend;
 
@@ -36,7 +36,6 @@ public abstract class PLSender extends SocketHandler
         this.receiver = receiver;
     }
 
-    // TODO: timeout per dest
     public void addTimeoutTask( Packet packet )
     {
         int destId = packet.getDestId();
@@ -47,8 +46,8 @@ public abstract class PLSender extends SocketHandler
                 Packet ackPacket = Packet.createACKPacket( packet );
                 if ( !service.closed.get() && !acknowledged.contains( ackPacket ) )
                 {
-                    pp2pBroadcast( packet );
                     service.timeout.increase( destId );
+                    pp2pBroadcast( packet );
                 }
                 cancel();
             }
@@ -74,18 +73,18 @@ public abstract class PLSender extends SocketHandler
         service.register( packet );
     }
 
-    public boolean pp2pBroadcast( Packet packet )
+    public void pp2pBroadcast( Packet packet )
     {
         if ( !sendPacket( packet ) )
-            return false;
+            return;
+
+        addTimeoutTask( packet );
 
         if ( onBroadcast( packet ) )
             onNewBroadcast( packet );
 
-        addTimeoutTask( packet );
-
         Logger.log( "Sent packet " + packet );
-        return true;
+        return;
     }
 
     /**

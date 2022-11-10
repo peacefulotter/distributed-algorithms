@@ -38,18 +38,18 @@ public class Timeout
             return prevent;
         }
 
-        public void increase()
+        public boolean increase()
         {
-            if ( preventChange( lastIncrease ) ) return;
+            if ( preventChange( lastIncrease ) ) return false;
             timeout.set( (int) Math.min( timeout.get() * MULT_INCREASE, MAX ) );
-            Logger.log( PREFIX, "Increasing to " + timeout );
+            return true;
         }
 
-        public void decrease()
+        public boolean decrease()
         {
-            if ( preventChange( lastDecrease ) ) return;
+            if ( preventChange( lastDecrease ) ) return false;
             timeout.set( (int) Math.max( timeout.get() * MULT_DECREASE, MIN ) );
-            Logger.log( PREFIX, "Decreasing to " + timeout );
+            return true;
         }
     }
 
@@ -63,12 +63,18 @@ public class Timeout
 
     public void increase( int id )
     {
-        handlers.get( id ).increase();
+        Handler h = handlers.get( id );
+        int before = h.timeout.get();
+        if ( h.increase() )
+            Logger.log( PREFIX, "(" + id + ") Increasing " + before + " -> " + h.timeout.get() );
     }
 
     public void decrease( int id )
     {
-        handlers.get( id ).decrease();
+        Handler h = handlers.get( id );
+        int before = h.timeout.get();
+        if ( h.decrease() );
+            Logger.log( PREFIX, "(" + id + ") Decreasing " + before + " -> " + h.timeout.get() );
     }
 
     public int get( int id )
