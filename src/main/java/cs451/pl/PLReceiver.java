@@ -46,7 +46,7 @@ public class PLReceiver extends SocketHandler
         // todo: TIMEOUT decrease elsewhere because of fifo
         // todo: that can queue many packets
         // todo: decrease onReceiveBroadcast()?
-        service.timeout.decrease();
+        service.timeout.decrease( packet.getSrc() );
     }
 
     public void onReceiveBroadcast( Packet packet )

@@ -1,12 +1,10 @@
 package cs451.packet;
 
 import cs451.Host;
-import cs451.utils.Logger;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.StringJoiner;
@@ -59,7 +57,7 @@ public class Packet
         return inverseDirection( PacketTypes.BRC, packet );
     }
 
-    public Packet( DatagramPacket from )
+    public Packet( DatagramPacket from, Host dest )
     {
         String msg = new String( from.getData() ).trim();
         String[] split = msg.split( SEPARATOR );
@@ -67,8 +65,8 @@ public class Packet
         this.seqNr = Integer.parseInt( split[1] );
         this.origin = Integer.parseInt( split[2] );
         this.src = Integer.parseInt( split[3] );
-        this.dest = Host.findById.get( Integer.parseInt( split[4] ) );
-        this.messages = Integer.parseInt( split[5] );
+        this.dest = dest;
+        this.messages = Integer.parseInt( split[4] );
     }
 
     public Packet withType( PacketTypes pt )
@@ -99,13 +97,12 @@ public class Packet
 
     public DatagramPacket getDatagram()
     {
-        // total max: 74
+        // total max: 70
         String payload = new StringJoiner( SEPARATOR ) // messages + 5 (max 13)
             .add( type.getTag() + "" ) // 2 bytes
             .add( seqNr + "" ) // 4 bytes
             .add( origin + "" ) // 4 bytes
             .add( src + "" ) // 4 bytes
-            .add( getDestId() + "" ) // 4 bytes
             .add( messages + "" ) // 4 bytes
             .add( getPayloads() ) // messages * 4 bytes + messages - 1 (max 39)
             .toString();

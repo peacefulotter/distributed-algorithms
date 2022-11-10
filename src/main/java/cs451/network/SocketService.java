@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.channels.ClosedChannelException;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SocketService
@@ -43,7 +45,7 @@ public class SocketService
         }
 
         this.handler = new FileHandler( result.output );
-        this.timeout = new Timeout();
+        this.timeout = new Timeout( hosts );
         this.closed = new AtomicBoolean(false);
         Logger.log( "Socket connected" );
     }
@@ -58,12 +60,9 @@ public class SocketService
         {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             socket.receive( packet );
-            return new Packet( packet );
+            return new Packet( packet, host );
         }
-        catch ( SocketTimeoutException e ) {
-            Logger.log( "TimeoutException: " + timeout.get() + "ms");
-        }
-        catch ( PortUnreachableException | ClosedChannelException e ) {
+        catch ( SocketTimeoutException | PortUnreachableException | ClosedChannelException e ) {
             Logger.log( e.getMessage() );
         }
         catch ( IOException e )

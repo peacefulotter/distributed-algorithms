@@ -36,8 +36,10 @@ public abstract class PLSender extends SocketHandler
         this.receiver = receiver;
     }
 
+    // TODO: timeout per dest
     public void addTimeoutTask( Packet packet )
     {
+        int destId = packet.getDestId();
         TimerTask task = new TimerTask() {
             public void run() {
                 Logger.log(  "Scheduler fired for " + packet );
@@ -46,12 +48,12 @@ public abstract class PLSender extends SocketHandler
                 if ( !service.closed.get() && !acknowledged.contains( ackPacket ) )
                 {
                     pp2pBroadcast( packet );
-                    service.timeout.increase();
+                    service.timeout.increase( destId );
                 }
                 cancel();
             }
         };
-        timer.schedule( task, service.timeout.get() );
+        timer.schedule( task, service.timeout.get( destId ) );
     }
 
     /**

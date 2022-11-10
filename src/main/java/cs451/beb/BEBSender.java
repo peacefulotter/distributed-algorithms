@@ -38,18 +38,21 @@ public class BEBSender extends PLSender
             sent = sent && broadcasted;
         }
 
-        if ( sent )
+        // if successfully sent and it's not a relay
+        if ( sent && packet != null && packet.getOrigin() == packet.getSrc() )
             super.onNewBroadcast( packet );
 
         return sent;
     }
 
+    // Override it to avoid registering multiple time the same broadcast packet
+    // instead call super.onNewBroadcast ONCE at the end of bebBroadcast
+    // to register the broadcast packet once
     @Override
     protected void onNewBroadcast( Packet packet )
     {
-        // Override it to avoid registering multiple time the same broadcast packet
-        // instead call super.onNewBroadcast ONCE at the end of bebBroadcast
-        // to register the broadcast packet once
+        // if origin == src -> broadcast registered by bebBroadcast
+        // else -> don't register the broadcast as it is a relay
     }
 
     public void addMessageQueue( Message msg )
