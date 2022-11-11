@@ -20,11 +20,10 @@ public class URBSender extends BEBSender
     }
 
     @Override
-    public boolean broadcast( Message msg )
+    public void broadcast( Message msg )
     {
-        URBReceiver r = (URBReceiver) receiver;
-        r.createMajority( service.id, msg.seq );
-        return bebBroadcast( msg );
+        ((URBReceiver) receiver).createMajority( msg );
+        bebBroadcast( msg );
     }
 }
 

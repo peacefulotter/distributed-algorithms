@@ -14,11 +14,12 @@ public class Stopwatch
         start = System.nanoTime();
     }
 
-    public static void stop()
+    public static void stop(int s)
     {
         if ( flag.get() ) return;
         flag.set( true );
         long delta = System.nanoTime() - start;
-        System.out.println( "\n================\n === " + Timeout.toMs(delta) + "ms" + " === \n================\n" );
+        long mem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        System.out.println( "\n================\n" + mem + "\n" + s + " - " + Timeout.toMs(delta) + " ms\n================\n" );
     }
 }

@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class Logger
 {
-    private static final boolean ENABLED = true;
+    private static final boolean ENABLED = false;
     private static final Clock clock = new HighLevelClock();
     private static final Map<Long, Color> colorMap = new HashMap<>();
 

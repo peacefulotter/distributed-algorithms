@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 
 public class Packet
 {
+    // TODO: extends from Message
     private static final String SEPARATOR = "-";
 
     private final PacketTypes type;
@@ -150,10 +151,10 @@ public class Packet
     public String toString()
     {
         return "TYPE=" + type +
-            ", ORIG=" + origin +
+            ", ORG=" + origin +
             ", SRC=" + src +
-            ", DEST=" + getDestId() +
+            ", DST=" + getDestId() +
             ", SEQ=" + seqNr +
-            ", MSGS=" + messages;
+            ", MSG=" + messages;
     }
 }

@@ -84,7 +84,6 @@ public abstract class PLSender extends SocketHandler
             onNewBroadcast( packet );
 
         Logger.log( "Sent packet " + packet );
-        return;
     }
 
     /**
