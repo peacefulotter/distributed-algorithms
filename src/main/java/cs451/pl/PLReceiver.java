@@ -42,6 +42,7 @@ public class PLReceiver extends SocketHandler
 
         log( "Delivering : " + packet );
         delivered.add( packet );
+        sender.onDeliver( packet );
         service.registerDeliver( packet );
     }
 

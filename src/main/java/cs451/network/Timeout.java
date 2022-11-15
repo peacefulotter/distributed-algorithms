@@ -34,7 +34,8 @@ public class Timeout
         private boolean preventChange( AtomicLong last )
         {
             long current = System.nanoTime();
-            boolean prevent = toMs( current - last.get() ) < current / DELTA_RATIO;
+            System.out.println(toMs( current - last.get() ) + " " + (timeout.get() / DELTA_RATIO));
+            boolean prevent = toMs( current - last.get() ) < (timeout.get() / DELTA_RATIO);
             last.set( System.nanoTime() );
             return prevent;
         }

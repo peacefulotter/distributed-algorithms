@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 public class Packet
 {
     // TODO: extends from Message
-    
+
     private final PacketTypes type;
     private final Host dest;
     private final int seqNr, origin, src, messages;

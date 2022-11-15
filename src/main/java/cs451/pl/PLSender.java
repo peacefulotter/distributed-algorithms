@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class PLSender extends SocketHandler
 {
-    // TODO: to Map + GC of acknowledged
+    // TODO: GC of acknowledged
 
     protected static final int PACKETS_TO_SEND = 3;
 
@@ -22,7 +22,7 @@ public abstract class PLSender extends SocketHandler
     protected final Queue<Packet> toSend;
 
     protected final ConcurrentLinkedQueue<Packet> acknowledged;
-    protected final List<Packet> broadcasted;
+    // protected final Set<Packet> broadcasted;
 
     protected final AtomicInteger packetsToSend;
 
@@ -35,8 +35,8 @@ public abstract class PLSender extends SocketHandler
         this.toBroadcast = new ConcurrentLinkedQueue<>();
         this.toSend = new ArrayDeque<>();
         this.acknowledged = new ConcurrentLinkedQueue<>();
-        this.broadcasted = new ArrayList<>();
-        this.packetsToSend = new AtomicInteger(PACKETS_TO_SEND * service.getNbHosts());
+        // this.broadcasted = new HashSet<>();
+        this.packetsToSend = new AtomicInteger( PACKETS_TO_SEND );
     }
 
     public void addBroadcastQueue( Message msg )
@@ -59,49 +59,39 @@ public abstract class PLSender extends SocketHandler
         int destId = packet.getDestId();
         TimerTask task = new TimerTask() {
             public void run() {
-                Logger.log(  "Scheduler fired for " + packet );
-                // same packet but different type to do the comparisons in acknowledged.contains
-                Packet ackPacket = Packet.createACKPacket( packet );
-                if ( !service.closed.get() && !acknowledged.contains( ackPacket ) )
-                {
-                    service.timeout.increase( destId );
-                    addSendQueue( packet );
-                }
-                cancel();
+            Logger.log(  "Scheduler fired for " + packet );
+            // same packet but different type to do the comparisons in acknowledged.contains
+            Packet ackPacket = Packet.createACKPacket( packet );
+            if ( !service.closed.get() && !acknowledged.contains( ackPacket ) )
+            {
+                service.timeout.increase( destId );
+                addSendQueue( packet );
+            }
+            cancel();
             }
         };
         timer.schedule( task, service.timeout.get( destId ) );
     }
 
-    /**
-     * Called when broadcasting the given packet succeeded, and it is not a retransmit.
-     * Definition can register the packet to the FileHandler
-     */
-    protected void onBroadcast(Packet packet)
+    public void onDeliver( Packet packet )
     {
-        if ( broadcasted.contains( packet ) )
-            return;
-
-        broadcasted.add( packet );
+        System.out.println((packet.getOrigin() == service.id) + " " + packet);
+        if ( packet.getOrigin() == service.id )
+            packetsToSend.incrementAndGet();
     }
 
-    protected void onNewBroadcast( Packet packet )
+    protected void register( Message m )
     {
-        service.register( packet );
+        service.register( new Packet( m, service.getSelf() ) );
     }
 
     public void pp2pBroadcast( Packet packet )
     {
         if ( !sendPacket( packet ) )
             return;
-
         addTimeoutTask( packet );
     }
 
-    /**
-     * Can be redefined by children to execute some additional steps
-     *  when receiving an ACK packet
-     */
     protected void onAcknowledge( Packet packet )
     {
         if ( acknowledged.contains( packet ) )
@@ -110,9 +100,5 @@ public abstract class PLSender extends SocketHandler
         Logger.log(  "Acknowledged " + packet );
 
         acknowledged.add( packet );
-        broadcasted.remove( Packet.createBRCPacket( packet ) );
-
-        // TODO: not a fan of that
-        packetsToSend.incrementAndGet();
     }
 }

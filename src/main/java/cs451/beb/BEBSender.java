@@ -29,14 +29,12 @@ public class BEBSender extends PLSender
         {
             packet = new Packet( msg, dest );
             pp2pBroadcast( packet );
-            onBroadcast( packet );
         }
     }
 
     @Override
     public void run()
     {
-        int nbHosts = service.getNbHosts();
         Message msg = Message.getFirst( service );
         while ( !service.closed.get() )
         {
@@ -53,16 +51,18 @@ public class BEBSender extends PLSender
                 Logger.log( "BEBSender","toSend - Sent packet " + p );
             }
             else if (
-                packetsToSend.get() >= nbHosts &&
+                packetsToSend.get() > 0 &&
                 msg.seq <= service.nbMessages
             )
             {
+                packetsToSend.decrementAndGet();
                 broadcast( msg );
+                register( msg );
                 Logger.log( "BEBSender","normal - Sent packet " + msg );
-                packetsToSend.addAndGet( -nbHosts );
                 msg = msg.getNext( service );
-                onNewBroadcast( new Packet( msg, service.getSelf() ) );
             }
+            else
+                System.out.println("sleeping " + packetsToSend);
             Sleeper.release();
         }
     }

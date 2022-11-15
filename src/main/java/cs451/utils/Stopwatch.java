@@ -12,14 +12,20 @@ public class Stopwatch
     public static void init()
     {
         start = System.nanoTime();
+        print(0);
+    }
+
+    private static void print(int s)
+    {
+        long delta = System.nanoTime() - start;
+        long mem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+        System.out.println( "\n================\n" + mem + "\n" + s + " - " + Timeout.toMs(delta) + " ms\n================\n" );
     }
 
     public static void stop(int s)
     {
         if ( flag.get() ) return;
         flag.set( true );
-        long delta = System.nanoTime() - start;
-        long mem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-        System.out.println( "\n================\n" + mem + "\n" + s + " - " + Timeout.toMs(delta) + " ms\n================\n" );
+        print(s);
     }
 }
