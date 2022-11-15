@@ -58,6 +58,8 @@ public class FileHandler
         {
             e.printStackTrace();
         }
+        // TODO: remove
+        Stopwatch.stop(messages.size());
         messages.clear();
     }
 }

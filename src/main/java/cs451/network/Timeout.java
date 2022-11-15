@@ -13,9 +13,10 @@ public class Timeout
 {
     private static final String PREFIX = "Timeout";
 
-    private static final float MIN_DELTA_CHANGE = 10; // 10 ms
-    private static final float MULT_INCREASE = 1.5f; //  *3/2
-    private static final float MULT_DECREASE = 0.75f; // *3/4
+    // private static final float MIN_DELTA_CHANGE = 10; // 10 ms
+    private static final float DELTA_RATIO = 3; // 1/3 change
+    private static final float INCREASE = 1.5f; //  *3/2
+    private static final float DECREASE = 0.75f; // *3/4
     private static final int MIN = 25;
     private static final int BASE = 50;
     private static final int MAX = 1000;
@@ -33,7 +34,7 @@ public class Timeout
         private boolean preventChange( AtomicLong last )
         {
             long current = System.nanoTime();
-            boolean prevent = toMs( current - last.get() ) < MIN_DELTA_CHANGE;
+            boolean prevent = toMs( current - last.get() ) < current / DELTA_RATIO;
             last.set( System.nanoTime() );
             return prevent;
         }
@@ -41,14 +42,14 @@ public class Timeout
         public boolean increase()
         {
             if ( preventChange( lastIncrease ) ) return false;
-            timeout.set( (int) Math.min( timeout.get() * MULT_INCREASE, MAX ) );
+            timeout.set( (int) Math.min( timeout.get() * INCREASE, MAX ) );
             return true;
         }
 
         public boolean decrease()
         {
             if ( preventChange( lastDecrease ) ) return false;
-            timeout.set( (int) Math.max( timeout.get() * MULT_DECREASE, MIN ) );
+            timeout.set( (int) Math.max( timeout.get() * DECREASE, MIN ) );
             return true;
         }
     }
@@ -73,7 +74,7 @@ public class Timeout
     {
         Handler h = handlers.get( id );
         int before = h.timeout.get();
-        if ( h.decrease() );
+        if ( h.decrease() )
             Logger.log( PREFIX, "(" + id + ") Decreasing " + before + " -> " + h.timeout.get() );
     }
 

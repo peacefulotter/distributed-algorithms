@@ -8,18 +8,13 @@ import cs451.packet.Packet;
 import cs451.utils.Logger;
 import cs451.utils.Sleeper;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 public class BEBSender extends PLSender
 {
     // TODO: 16Mb per process
 
-    private final ConcurrentLinkedQueue<Message> messages;
-
     public BEBSender( SocketService service )
     {
         super( service );
-        this.messages = new ConcurrentLinkedQueue<>();
     }
 
     public void broadcast( Message msg )
@@ -29,31 +24,13 @@ public class BEBSender extends PLSender
 
     public void bebBroadcast( Message msg )
     {
-        Packet packet = null;
+        Packet packet;
         for ( Host dest : service.getHosts() )
         {
             packet = new Packet( msg, dest );
             pp2pBroadcast( packet );
+            onBroadcast( packet );
         }
-
-        // if successfully sent and it's not a relay
-        if ( packet != null && packet.getOrigin() == packet.getSrc() )
-            super.onNewBroadcast( packet );
-    }
-
-    // Override it to avoid registering multiple time the same broadcast packet
-    // instead call super.onNewBroadcast ONCE at the end of bebBroadcast
-    // to register the broadcast packet once
-    @Override
-    protected void onNewBroadcast( Packet packet )
-    {
-        // if origin == src -> broadcast registered by bebBroadcast
-        // else -> don't register the broadcast as it is a relay
-    }
-
-    public void addMessageQueue( Message msg )
-    {
-        this.messages.add( msg );
     }
 
     @Override
@@ -63,23 +40,30 @@ public class BEBSender extends PLSender
         Message msg = Message.getFirst( service );
         while ( !service.closed.get() )
         {
-            Logger.log( "BEBSender", messages );
-            Message fromQueue = messages.poll();
-            if ( fromQueue != null )
-                bebBroadcast( fromQueue ); // TODO: later - not BEB
-
+            if ( !toBroadcast.isEmpty() )
+            {
+                Message m = toBroadcast.poll();
+                bebBroadcast( m );
+                Logger.log( "BEBSender","toBroadcast - Broadcasted packet " + m );
+            }
+            else if ( !toSend.isEmpty() )
+            {
+                Packet p = toSend.poll();
+                pp2pBroadcast( p );
+                Logger.log( "BEBSender","toSend - Sent packet " + p );
+            }
             else if (
                 packetsToSend.get() >= nbHosts &&
                 msg.seq <= service.nbMessages
             )
             {
                 broadcast( msg );
+                Logger.log( "BEBSender","normal - Sent packet " + msg );
                 packetsToSend.addAndGet( -nbHosts );
                 msg = msg.getNext( service );
+                onNewBroadcast( new Packet( msg, service.getSelf() ) );
             }
             Sleeper.release();
         }
-        Logger.log( "BEBSender", " Done" );
     }
 }
-

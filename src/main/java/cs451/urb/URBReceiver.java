@@ -8,22 +8,21 @@ import cs451.utils.Logger;
 import cs451.utils.Pair;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 
 public class URBReceiver extends BEBReceiver
 {
     // (origin, seq) -> List<p_i>
-    private final ConcurrentMap<Pair<Integer, Integer>, List<Integer>> majority;
-    private final ConcurrentLinkedQueue<Pair<Integer, Integer>> delivered;
+    private final Map<Pair<Integer, Integer>, List<Integer>> majority;
+    private final List<Pair<Integer, Integer>> delivered;
 
     public URBReceiver( SocketService service )
     {
         super( service );
-        this.majority = new ConcurrentHashMap<>();
-        this.delivered = new ConcurrentLinkedQueue<>();
+        this.majority = new HashMap<>();
+        this.delivered = new ArrayList<>();
     }
 
     public void createMajority( Message m )
@@ -48,7 +47,6 @@ public class URBReceiver extends BEBReceiver
     private void onRelay( Pair<Integer, Integer> p, Packet packet )
     {
         Integer src = packet.getSrc();
-        System.out.println(majority);
 
         List<Integer> processes = majority.get( p );
         if ( hasMajority( processes ) || processes.contains( src ) )
@@ -69,7 +67,6 @@ public class URBReceiver extends BEBReceiver
     public void onReceiveBroadcast( Packet packet )
     {
         Pair<Integer, Integer> pair = Pair.fromPacket( packet );
-        System.out.println("Received " + pair);
         if ( majority.containsKey( pair ) )
             onRelay( pair, packet );
         else if ( !delivered.contains( pair ) )

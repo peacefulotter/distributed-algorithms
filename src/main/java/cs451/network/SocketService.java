@@ -50,6 +50,8 @@ public class SocketService
 
     public int getNbHosts() { return hosts.size(); }
 
+    public Host getSelf() { return host; }
+
     public List<Host> getHosts() { return hosts; }
 
     public Packet getIncomingPacket()

@@ -2,22 +2,28 @@ package cs451.pl;
 
 import cs451.network.SocketHandler;
 import cs451.network.SocketService;
+import cs451.packet.Message;
 import cs451.utils.Logger;
 import cs451.packet.Packet;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class PLSender extends SocketHandler
 {
+    // TODO: to Map + GC of acknowledged
+
     protected static final int PACKETS_TO_SEND = 3;
 
     private final Timer timer;
 
-    // TODO: to Map + GC of acknowledged
-    protected final ConcurrentLinkedQueue<Packet> broadcasted, acknowledged;
+    protected final ConcurrentLinkedQueue<Message> toBroadcast;
+    protected final Queue<Packet> toSend;
+
+    protected final ConcurrentLinkedQueue<Packet> acknowledged;
+    protected final List<Packet> broadcasted;
+
     protected final AtomicInteger packetsToSend;
 
     protected PLReceiver receiver;
@@ -26,9 +32,21 @@ public abstract class PLSender extends SocketHandler
     {
         super(service);
         this.timer = new Timer("Timer");
-        this.broadcasted = new ConcurrentLinkedQueue<>();
+        this.toBroadcast = new ConcurrentLinkedQueue<>();
+        this.toSend = new ArrayDeque<>();
         this.acknowledged = new ConcurrentLinkedQueue<>();
+        this.broadcasted = new ArrayList<>();
         this.packetsToSend = new AtomicInteger(PACKETS_TO_SEND * service.getNbHosts());
+    }
+
+    public void addBroadcastQueue( Message msg )
+    {
+        this.toBroadcast.add( msg );
+    }
+
+    public void addSendQueue( Packet p )
+    {
+        this.toSend.add( p );
     }
 
     public void setReceiver( PLReceiver receiver )
@@ -47,7 +65,7 @@ public abstract class PLSender extends SocketHandler
                 if ( !service.closed.get() && !acknowledged.contains( ackPacket ) )
                 {
                     service.timeout.increase( destId );
-                    pp2pBroadcast( packet );
+                    addSendQueue( packet );
                 }
                 cancel();
             }
@@ -59,13 +77,12 @@ public abstract class PLSender extends SocketHandler
      * Called when broadcasting the given packet succeeded, and it is not a retransmit.
      * Definition can register the packet to the FileHandler
      */
-    protected boolean onBroadcast(Packet packet)
+    protected void onBroadcast(Packet packet)
     {
         if ( broadcasted.contains( packet ) )
-            return false;
+            return;
 
         broadcasted.add( packet );
-        return true;
     }
 
     protected void onNewBroadcast( Packet packet )
@@ -79,11 +96,6 @@ public abstract class PLSender extends SocketHandler
             return;
 
         addTimeoutTask( packet );
-
-        if ( onBroadcast( packet ) )
-            onNewBroadcast( packet );
-
-        Logger.log( "Sent packet " + packet );
     }
 
     /**

@@ -56,7 +56,7 @@ public class Message
     @Override
     public String toString()
     {
-        return "\nTYPE=" + type +
+        return "TYPE=" + type +
             ", SEQ=" + seq +
             ", ORG=" + origin +
             ", SRC=" + src +

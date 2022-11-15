@@ -4,18 +4,16 @@ import cs451.Host;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Objects;
-import java.util.StringJoiner;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Packet
 {
     // TODO: extends from Message
-    private static final String SEPARATOR = "-";
-
+    
     private final PacketTypes type;
     private final Host dest;
     private final int seqNr, origin, src, messages;
@@ -60,14 +58,13 @@ public class Packet
 
     public Packet( DatagramPacket from, Host dest )
     {
-        String msg = new String( from.getData() ).trim();
-        String[] split = msg.split( SEPARATOR );
-        this.type = PacketTypes.parseType( msg.charAt( 0 ) );
-        this.seqNr = Integer.parseInt( split[1] );
-        this.origin = Integer.parseInt( split[2] );
-        this.src = Integer.parseInt( split[3] );
+        ByteBuffer bb = ByteBuffer.wrap(from.getData());
+        this.type = PacketTypes.parseType( bb.getChar() );
+        this.seqNr = bb.getInt();
+        this.origin = bb.getInt();
+        this.src = bb.getInt();
         this.dest = dest;
-        this.messages = Integer.parseInt( split[4] );
+        this.messages = bb.getInt();
     }
 
     public Packet withType( PacketTypes pt )
@@ -88,27 +85,19 @@ public class Packet
         return seqNr / Message.MAX;
     }
 
-    private String getPayloads()
-    {
-        StringJoiner sj = new StringJoiner( SEPARATOR );
-        for ( int i = seqNr; i < seqNr + messages; i++ )
-            sj.add( i + "" );
-        return sj.toString();
-    }
-
     public DatagramPacket getDatagram()
     {
         // total max: 70
-        String payload = new StringJoiner( SEPARATOR ) // messages + 5 (max 13)
-            .add( type.getTag() + "" ) // 2 bytes
-            .add( seqNr + "" ) // 4 bytes
-            .add( origin + "" ) // 4 bytes
-            .add( src + "" ) // 4 bytes
-            .add( messages + "" ) // 4 bytes
-            .add( getPayloads() ) // messages * 4 bytes + messages - 1 (max 39)
-            .toString();
-        byte[] bytes = payload.getBytes( StandardCharsets.UTF_8 );
-        return new DatagramPacket(bytes, bytes.length);
+        ByteBuffer bb = ByteBuffer.allocate( 70 );
+        bb.putChar( type.getTag() ); // 2 bytes
+        bb.putInt( seqNr ); // 4 bytes
+        bb.putInt( origin ); // 4 bytes
+        bb.putInt( src ); // 4 bytes
+        bb.putInt( messages ); // 4 bytes
+        // messages * 4 bytes + messages - 1 (max 39)
+        for ( int i = seqNr; i < seqNr + messages; i++ )
+            bb.putInt( i );
+        return new DatagramPacket( bb.array(), bb.capacity() );
     }
     public List<String> getFileLines() { return type.getFileLines( this ); }
 

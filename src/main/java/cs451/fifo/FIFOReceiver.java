@@ -49,16 +49,17 @@ public class FIFOReceiver extends URBReceiver
     public void deliver( Packet p )
     {
         OrderPreserver preserver = hostOrders.get( p.getSrc() );
+        int index = p.getIndex();
 
         // Packet is received in order
-        if ( p.getIndex() == preserver.lastResolved )
+        if ( index == preserver.lastResolved )
         {
             super.deliver( p );
             preserver.lastResolved++;
             resolvePending( preserver );
         }
         // Packet is delivered before the others -> add to pending
-        else if ( p.getIndex() > preserver.lastResolved )
-            preserver.pending.put( p.getIndex(), p );
+        else if ( index> preserver.lastResolved )
+            preserver.pending.put( index, p );
     }
 }

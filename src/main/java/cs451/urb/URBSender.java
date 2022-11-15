@@ -16,7 +16,7 @@ public class URBSender extends BEBSender
     public void relayBroadcast( Packet packet )
     {
         Message msg = new Message( PacketTypes.BRC, packet.getSeqNr(), packet.getOrigin(), service.id, packet.getMessages() );
-        addMessageQueue( msg );
+        addBroadcastQueue( msg );
     }
 
     @Override
