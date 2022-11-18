@@ -5,9 +5,12 @@ import cs451.network.SocketService;
 import cs451.packet.Message;
 import cs451.utils.Logger;
 import cs451.packet.Packet;
+import cs451.utils.WithGC;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class PLSender extends SocketHandler
@@ -19,10 +22,8 @@ public abstract class PLSender extends SocketHandler
     private final Timer timer;
 
     protected final ConcurrentLinkedQueue<Message> toBroadcast;
-    protected final Queue<Packet> toSend;
-
-    protected final ConcurrentLinkedQueue<Packet> acknowledged;
-    // protected final Set<Packet> broadcasted;
+    protected final ConcurrentLinkedQueue<Packet> toSend;
+    protected final ConcurrentSkipListSet<Integer> acknowledged;
 
     protected final AtomicInteger packetsToSend;
 
@@ -33,9 +34,8 @@ public abstract class PLSender extends SocketHandler
         super(service);
         this.timer = new Timer("Timer");
         this.toBroadcast = new ConcurrentLinkedQueue<>();
-        this.toSend = new ArrayDeque<>();
-        this.acknowledged = new ConcurrentLinkedQueue<>();
-        // this.broadcasted = new HashSet<>();
+        this.toSend = new ConcurrentLinkedQueue<>();
+        this.acknowledged = new ConcurrentSkipListSet<>();
         this.packetsToSend = new AtomicInteger( PACKETS_TO_SEND );
     }
 
@@ -62,7 +62,7 @@ public abstract class PLSender extends SocketHandler
             Logger.log(  "Scheduler fired for " + packet );
             // same packet but different type to do the comparisons in acknowledged.contains
             Packet ackPacket = Packet.createACKPacket( packet );
-            if ( !service.closed.get() && !acknowledged.contains( ackPacket ) )
+            if ( !service.closed.get() && !acknowledged.contains( ackPacket.hashCode() ) )
             {
                 service.timeout.increase( destId );
                 addSendQueue( packet );
@@ -75,7 +75,6 @@ public abstract class PLSender extends SocketHandler
 
     public void onDeliver( Packet packet )
     {
-        System.out.println((packet.getOrigin() == service.id) + " " + packet);
         if ( packet.getOrigin() == service.id )
             packetsToSend.incrementAndGet();
     }
@@ -94,11 +93,12 @@ public abstract class PLSender extends SocketHandler
 
     protected void onAcknowledge( Packet packet )
     {
-        if ( acknowledged.contains( packet ) )
+        int hc = packet.hashCode();
+        if ( acknowledged.contains( hc ) )
             return;
 
         Logger.log(  "Acknowledged " + packet );
 
-        acknowledged.add( packet );
+        acknowledged.add( hc );
     }
 }

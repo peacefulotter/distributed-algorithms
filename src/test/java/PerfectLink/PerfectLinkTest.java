@@ -22,7 +22,7 @@ class PerfectLinkTest
             Logger.addColor( color );
             Main.initSignalHandlers( service );
             long t1 = System.nanoTime();
-            Pool pool = Main.invokeBEBServer( service );
+            Pool pool = Main.invokeFIFOServer( service );
             pool.start();
             long t2 = System.nanoTime();
             long delta = (t2 - t1) / 1000000;
@@ -36,7 +36,7 @@ class PerfectLinkTest
             "--id", id + "",
             "--hosts", "../example/hosts",
             "--output", "../example/output/" + id + ".output",
-            "../example/configs/perfect-links.config"
+            "../example/configs/fifo-broadcast.config"
         };
     }
 

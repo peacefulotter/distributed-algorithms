@@ -7,20 +7,22 @@ import cs451.packet.PacketTypes;
 import cs451.utils.Sleeper;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static cs451.utils.Logger.log;
 
 public class PLReceiver extends SocketHandler
 {
-    protected final List<Packet> delivered;
+    protected final Set<Integer> delivered;
 
     protected PLSender sender;
 
     public PLReceiver( SocketService service )
     {
         super( service );
-        this.delivered = new ArrayList<>();
+        this.delivered = new HashSet<>();
     }
 
     public void setSender( PLSender sender )
@@ -37,11 +39,12 @@ public class PLReceiver extends SocketHandler
 
     public void deliver( Packet packet )
     {
-        if ( delivered.contains( packet ) )
+        int hc = packet.hashCode();
+        if ( delivered.contains( hc ) )
             return;
 
         log( "Delivering : " + packet );
-        delivered.add( packet );
+        delivered.add( hc );
         sender.onDeliver( packet );
         service.registerDeliver( packet );
     }

@@ -10,8 +10,6 @@ import cs451.utils.Sleeper;
 
 public class BEBSender extends PLSender
 {
-    // TODO: 16Mb per process
-
     public BEBSender( SocketService service )
     {
         super( service );
@@ -38,13 +36,14 @@ public class BEBSender extends PLSender
         Message msg = Message.getFirst( service );
         while ( !service.closed.get() )
         {
-            if ( !toBroadcast.isEmpty() )
+            System.out.println("toBroadcast: " + toBroadcast.size() + ", toSend: " + toSend.size() + ", packetsToSend: " + packetsToSend.get());
+            if ( !toBroadcast.isEmpty() && Math.random() < 0.3 )
             {
                 Message m = toBroadcast.poll();
                 bebBroadcast( m );
                 Logger.log( "BEBSender","toBroadcast - Broadcasted packet " + m );
             }
-            else if ( !toSend.isEmpty() )
+            else if ( !toSend.isEmpty() && Math.random() < 0.3 )
             {
                 Packet p = toSend.poll();
                 pp2pBroadcast( p );
@@ -61,8 +60,6 @@ public class BEBSender extends PLSender
                 Logger.log( "BEBSender","normal - Sent packet " + msg );
                 msg = msg.getNext( service );
             }
-            else
-                System.out.println("sleeping " + packetsToSend);
             Sleeper.release();
         }
     }

@@ -5,12 +5,13 @@ import cs451.Host;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class Packet
+public class Packet implements Comparable<Packet>
 {
     // TODO: extends from Message
 
@@ -126,14 +127,13 @@ public class Packet
             type == that.type &&
             seqNr == that.seqNr &&
             src == that.src &&
-            getDestId() == that.getDestId() &&
-            messages == that.messages;
+            getDestId() == that.getDestId();
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash( type, seqNr, origin, src, dest, messages );
+        return Objects.hash( type, seqNr, origin, src, dest );
     }
 
     @Override
@@ -145,5 +145,17 @@ public class Packet
             ", DST=" + getDestId() +
             ", SEQ=" + seqNr +
             ", MSG=" + messages;
+    }
+
+    @Override
+    public int compareTo( Packet o )
+    {
+        return Comparator
+            .comparing( Packet::getType )
+            .thenComparing( Packet::getOrigin )
+            .thenComparing( Packet::getSrc )
+            .thenComparing( Packet::getDestId )
+            .thenComparing( Packet::getSeqNr )
+            .compare( this, o );
     }
 }
