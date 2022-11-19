@@ -41,7 +41,6 @@ public class FileHandler
     {
         messages.addAll( p.getFileLines() );
 
-        // TODO: remove
         if ( messages.size() >= FIFOConfig.m * (Host.findById.size() + 1) )
             Stopwatch.stop(messages.size());
     }

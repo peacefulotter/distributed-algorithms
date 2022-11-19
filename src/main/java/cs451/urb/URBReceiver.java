@@ -8,24 +8,32 @@ import cs451.utils.Logger;
 import cs451.utils.Pair;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 public class URBReceiver extends BEBReceiver
 {
     // (origin, seq) -> List<p_i>
-    private final Map<Pair<Integer, Integer>, List<Integer>> majority;
+    private final ConcurrentMap<Pair<Integer, Integer>, List<Integer>> majority;
     private final List<Pair<Integer, Integer>> delivered;
+    private final int threshold;
 
     public URBReceiver( SocketService service )
     {
         super( service );
-        this.majority = new HashMap<>();
+        this.majority = new ConcurrentHashMap<>();
         this.delivered = new ArrayList<>();
+        this.threshold = (int) Math.floor( service.getNbHosts() / 2f );
     }
 
-    public void createMajority( Message m )
+    public void createEmptyMajority( Message m )
+    {
+        Pair<Integer, Integer> pair = Pair.fromMessage( m );
+        majority.put( pair, new ArrayList<>() );
+    }
+
+    private void createMajority( Message m )
     {
         Pair<Integer, Integer> pair = Pair.fromMessage( m );
         List<Integer> processes = new ArrayList<>();
@@ -35,7 +43,7 @@ public class URBReceiver extends BEBReceiver
 
     private boolean hasMajority( List<Integer> processes )
     {
-        return processes.size() > Math.floor( service.getNbHosts() / 2f );
+        return processes.size() > threshold;
     }
 
     private void deliverRelay( Packet p )
@@ -53,7 +61,6 @@ public class URBReceiver extends BEBReceiver
             return;
 
         processes.add( src );
-        majority.put( p, processes );
 
         if ( hasMajority( processes ) )
         {
@@ -61,17 +68,20 @@ public class URBReceiver extends BEBReceiver
             delivered.add( p );
             majority.remove( p );
         }
+        else
+            majority.put( p, processes );
     }
 
     @Override
     public void onReceiveBroadcast( Packet packet )
     {
-        Pair<Integer, Integer> pair = Pair.fromPacket( packet );
+        Pair<Integer, Integer> pair = Pair.fromMessage( packet );
+        System.out.println(delivered + " -- " + majority);
         if ( majority.containsKey( pair ) )
             onRelay( pair, packet );
         else if ( !delivered.contains( pair ) )
         {
-            createMajority( new Message( packet ) );
+            createMajority( packet );
             ((URBSender) sender).relayBroadcast( packet );
         }
     }

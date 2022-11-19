@@ -12,7 +12,7 @@ public enum PacketTypes
 
     private interface PacketLambda
     {
-        String apply( Packet packet, int i );
+        String apply( Message m, int i );
     }
 
     private final char tag;
@@ -32,10 +32,10 @@ public enum PacketTypes
         return UNKNOWN;
     }
 
-    public List<String> getFileLines( Packet packet )
+    public List<String> getFileLines( Message m )
     {
-        return packet.getSeqRange()
-            .map( i -> tag + " " + lambda.apply( packet, i ) )
+        return m.getSeqRange()
+            .map( i -> tag + " " + lambda.apply( m, i ) )
             .collect( Collectors.toList() );
     }
 

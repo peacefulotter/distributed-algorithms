@@ -22,8 +22,8 @@ public class URBSender extends BEBSender
     @Override
     public void broadcast( Message msg )
     {
-        ((URBReceiver) receiver).createMajority( msg );
-        bebBroadcast( msg );
+        ((URBReceiver) receiver).createEmptyMajority( msg );
+        super.broadcast( msg );
     }
 }
 

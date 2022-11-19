@@ -6,9 +6,7 @@ import cs451.packet.Packet;
 import cs451.packet.PacketTypes;
 import cs451.utils.Sleeper;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import static cs451.utils.Logger.log;
@@ -71,23 +69,18 @@ public class PLReceiver extends SocketHandler
         else if ( packet.getType() == PacketTypes.ACK )
         {
             sender.onAcknowledge( packet );
-            service.timeout.decrease( packet.getSrc() );
         }
     }
 
     @Override
     public void run()
     {
-        // TODO: add this?
-        // int targetAcknowledgedSize = sender.queue.size();
-        // int targetDeliveredSize = targetAcknowledgedSize * service.getNbHosts();
         while ( !service.closed.get() )
         {
             Packet packet = getPacket();
             if ( packet != null )
                 onPacket( packet );
             Sleeper.release();
-            // System.out.println("receiver " + delivered.size() + " " + targetDeliveredSize );
         }
     }
 }

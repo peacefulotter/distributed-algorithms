@@ -2,9 +2,15 @@ package cs451.packet;
 
 import cs451.network.SocketService;
 
+import java.net.DatagramPacket;
+import java.nio.ByteBuffer;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
-public class Message
+public class Message implements Comparable<Packet>
 {
     public static final int MAX = 8;
 
@@ -20,9 +26,59 @@ public class Message
         this.messages = messages;
     }
 
-    public Message( Packet p )
+    public Message( Message m )
     {
-        this( p.getType(), p.getSeqNr(), p.getOrigin(), p.getSrc(), p.getMessages() );
+        this( m.type, m.seq, m.origin, m.src, m.messages );
+    }
+
+    public Message( DatagramPacket from )
+    {
+        ByteBuffer bb = ByteBuffer.wrap(from.getData());
+        this.type = PacketTypes.parseType( bb.getChar() );
+        this.seq = bb.getInt();
+        this.origin = bb.getInt();
+        this.src = bb.getInt();
+        this.messages = bb.getInt();
+    }
+
+    protected Comparator<Message> getComparator()
+    {
+        return Comparator
+            .comparing( Message::getType )
+            .thenComparing( Message::getOrigin )
+            .thenComparing( Message::getSrc )
+            .thenComparing( Message::getSeqNr );
+    }
+
+    /**
+     * converts the seqNr into the packet index
+     */
+    public int getIndex()
+    {
+        return seq / MAX;
+    }
+
+    public DatagramPacket getDatagram()
+    {
+        // total max: 70
+        ByteBuffer bb = ByteBuffer.allocate( 70 );
+        bb.putChar( type.getTag() ); // 2 bytes
+        bb.putInt( seq ); // 4 bytes
+        bb.putInt( origin ); // 4 bytes
+        bb.putInt( src ); // 4 bytes
+        bb.putInt( messages ); // 4 bytes
+        // messages * 4 bytes + messages - 1 (max 39)
+        for ( int i = seq; i < seq + messages; i++ )
+            bb.putInt( i );
+        return new DatagramPacket( bb.array(), bb.capacity() );
+    }
+
+    public List<String> getFileLines() { return type.getFileLines( this ); }
+
+    public Stream<Integer> getSeqRange()
+    {
+        return IntStream.range( seq, seq + messages )
+            .boxed();
     }
 
     public static Message getFirst( SocketService service )
@@ -43,14 +99,14 @@ public class Message
     {
         if ( this == o ) return true;
         if ( o == null || getClass() != o.getClass() ) return false;
-        Message message = (Message) o;
-        return seq == message.seq && origin == message.origin && src == message.src && messages == message.messages && type == message.type;
+        Message m = (Message) o;
+        return seq == m.seq && origin == m.origin && src == m.src && type == m.type;
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash( type, seq, origin, src, messages );
+        return Objects.hash( type, seq, origin, src );
     }
 
     @Override
@@ -61,5 +117,17 @@ public class Message
             ", ORG=" + origin +
             ", SRC=" + src +
             ", MSG=" + messages;
+    }
+
+    public PacketTypes getType() { return type; }
+    public int getSeqNr() { return seq; }
+    public int getOrigin() { return origin; }
+    public int getSrc() { return src; }
+    public int getMessages() { return messages; }
+
+    @Override
+    public int compareTo( Packet o )
+    {
+        return getComparator().compare( this, o );
     }
 }

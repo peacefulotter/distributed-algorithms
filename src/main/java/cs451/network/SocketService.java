@@ -83,10 +83,10 @@ public class SocketService
         {
             socket.send( datagram );
         }
-        catch ( PortUnreachableException e )
+        /*catch ( PortUnreachableException e )
         {
             return false;
-        }
+        }*/
         catch ( IOException e )
         {
             terminate( e );

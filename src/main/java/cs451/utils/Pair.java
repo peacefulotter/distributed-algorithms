@@ -1,7 +1,6 @@
 package cs451.utils;
 
 import cs451.packet.Message;
-import cs451.packet.Packet;
 
 import java.util.Objects;
 
@@ -16,14 +15,9 @@ public class Pair<A, B>
         this.b = b;
     }
 
-    public static Pair<Integer, Integer> fromPacket( Packet packet )
-    {
-        return new Pair<>( packet.getOrigin(), packet.getSeqNr() );
-    }
-
     public static Pair<Integer, Integer> fromMessage( Message m )
     {
-        return new Pair<>( m.origin, m.seq );
+        return new Pair<>( m.getOrigin(), m.getSeqNr() );
     }
 
     @Override

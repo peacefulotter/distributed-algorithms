@@ -36,14 +36,13 @@ public class BEBSender extends PLSender
         Message msg = Message.getFirst( service );
         while ( !service.closed.get() )
         {
-            System.out.println("toBroadcast: " + toBroadcast.size() + ", toSend: " + toSend.size() + ", packetsToSend: " + packetsToSend.get());
-            if ( !toBroadcast.isEmpty() && Math.random() < 0.3 )
+            if ( !toBroadcast.isEmpty() )
             {
                 Message m = toBroadcast.poll();
                 bebBroadcast( m );
                 Logger.log( "BEBSender","toBroadcast - Broadcasted packet " + m );
             }
-            else if ( !toSend.isEmpty() && Math.random() < 0.3 )
+            else if ( !toSend.isEmpty() )
             {
                 Packet p = toSend.poll();
                 pp2pBroadcast( p );
@@ -54,7 +53,7 @@ public class BEBSender extends PLSender
                 msg.seq <= service.nbMessages
             )
             {
-                packetsToSend.decrementAndGet();
+                System.out.println( packetsToSend.decrementAndGet() );
                 broadcast( msg );
                 register( msg );
                 Logger.log( "BEBSender","normal - Sent packet " + msg );

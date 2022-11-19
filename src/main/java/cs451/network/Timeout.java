@@ -13,13 +13,11 @@ public class Timeout
 {
     private static final String PREFIX = "Timeout";
 
-    // private static final float MIN_DELTA_CHANGE = 10; // 10 ms
     private static final float DELTA_RATIO = 3; // 1/3 change
-    private static final float INCREASE = 1.5f; //  *3/2
-    private static final float DECREASE = 0.75f; // *3/4
+    private static final float INCREASE = 1.75f;
+    private static final float DECREASE = 0.9f;
     private static final int MIN = 25;
     private static final int BASE = 50;
-    private static final int MAX = 1000;
 
     private static class Handler
     {
@@ -42,7 +40,7 @@ public class Timeout
         public boolean increase()
         {
             if ( preventChange( lastIncrease ) ) return false;
-            timeout.set( (int) Math.min( timeout.get() * INCREASE, MAX ) );
+            timeout.set( (int) (timeout.get() * INCREASE) );
             return true;
         }
 
