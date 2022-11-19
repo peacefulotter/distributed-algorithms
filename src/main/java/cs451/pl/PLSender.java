@@ -13,8 +13,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class PLSender extends SocketHandler
 {
-    // TODO: GC of acknowledged
-
     protected static final int PACKETS_TO_SEND = 1;
 
     private final Timer timer;
