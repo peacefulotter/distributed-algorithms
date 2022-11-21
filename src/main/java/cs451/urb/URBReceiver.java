@@ -16,14 +16,14 @@ public class URBReceiver extends BEBReceiver
 {
     // (origin, seq) -> List<p_i>
     private final ConcurrentMap<Pair<Integer, Integer>, List<Integer>> majority;
-    private final List<Pair<Integer, Integer>> delivered;
+    private final List<Pair<Integer, Integer>> relayDelivered;
     private final int threshold;
 
     public URBReceiver( SocketService service )
     {
         super( service );
         this.majority = new ConcurrentHashMap<>();
-        this.delivered = new ArrayList<>();
+        this.relayDelivered = new ArrayList<>();
         this.threshold = (int) Math.floor( service.getNbHosts() / 2f );
     }
 
@@ -65,7 +65,7 @@ public class URBReceiver extends BEBReceiver
         if ( hasMajority( processes ) )
         {
             deliverRelay( packet );
-            delivered.add( p );
+            relayDelivered.add( p );
             majority.remove( p );
         }
         else
@@ -76,10 +76,9 @@ public class URBReceiver extends BEBReceiver
     public void onReceiveBroadcast( Packet packet )
     {
         Pair<Integer, Integer> pair = Pair.fromMessage( packet );
-        System.out.println(delivered + " -- " + majority);
         if ( majority.containsKey( pair ) )
             onRelay( pair, packet );
-        else if ( !delivered.contains( pair ) )
+        else if ( !relayDelivered.contains( pair ) )
         {
             createMajority( packet );
             ((URBSender) sender).relayBroadcast( packet );

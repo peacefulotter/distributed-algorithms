@@ -3,9 +3,11 @@ package cs451.fifo;
 import cs451.Host;
 import cs451.network.SocketService;
 import cs451.packet.Packet;
+import cs451.pl.PLReceiver;
 import cs451.urb.URBReceiver;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class FIFOReceiver extends URBReceiver
@@ -54,12 +56,12 @@ public class FIFOReceiver extends URBReceiver
         // Packet is received in order
         if ( index == preserver.lastResolved )
         {
-            super.deliver( p );
+            super.deliver( p ); // call PL.deliver
             preserver.lastResolved++;
             resolvePending( preserver );
         }
         // Packet is delivered before the others -> add to pending
-        else if ( index> preserver.lastResolved )
+        else if ( index > preserver.lastResolved )
             preserver.pending.put( index, p );
     }
 }

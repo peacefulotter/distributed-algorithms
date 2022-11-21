@@ -6,21 +6,15 @@ import cs451.packet.Packet;
 import cs451.packet.PacketTypes;
 import cs451.utils.Sleeper;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import static cs451.utils.Logger.log;
 
-public class PLReceiver extends SocketHandler
+abstract public class PLReceiver extends SocketHandler
 {
-    protected final Set<Integer> delivered;
-
     protected PLSender sender;
 
     public PLReceiver( SocketService service )
     {
         super( service );
-        this.delivered = new HashSet<>();
     }
 
     public void setSender( PLSender sender )
@@ -37,20 +31,12 @@ public class PLReceiver extends SocketHandler
 
     public void deliver( Packet packet )
     {
-        int hc = packet.hashCode();
-        if ( delivered.contains( hc ) )
-            return;
-
         log( "Delivering : " + packet );
-        delivered.add( hc );
         sender.onDeliver( packet );
         service.registerDeliver( packet );
     }
 
-    public void onReceiveBroadcast( Packet packet )
-    {
-        deliver(packet);
-    }
+    abstract public void onReceiveBroadcast( Packet packet );
 
     public Packet getPacket()
     {

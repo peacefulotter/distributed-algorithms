@@ -70,7 +70,7 @@ public abstract class PLSender extends SocketHandler
     public void onDeliver( Packet packet )
     {
         if ( packet.getOrigin() == service.id )
-            System.out.println( packetsToSend.incrementAndGet() );
+            packetsToSend.incrementAndGet();
     }
 
     protected void register( Message m )

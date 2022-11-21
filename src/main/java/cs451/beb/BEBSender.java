@@ -53,7 +53,6 @@ public class BEBSender extends PLSender
                 msg.seq <= service.nbMessages
             )
             {
-                System.out.println( packetsToSend.decrementAndGet() );
                 broadcast( msg );
                 register( msg );
                 Logger.log( "BEBSender","normal - Sent packet " + msg );
