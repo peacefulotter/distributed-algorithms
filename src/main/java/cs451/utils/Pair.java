@@ -15,6 +15,9 @@ public class Pair<A, B>
         this.b = b;
     }
 
+    public A getA() { return a; }
+    public B getB() { return b; }
+
     public static Pair<Integer, Integer> fromMessage( Message m )
     {
         return new Pair<>( m.getOrigin(), m.getSeqNr() );

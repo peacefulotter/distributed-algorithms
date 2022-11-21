@@ -8,6 +8,9 @@ public enum PacketTypes
 {
     BRC( 'b', ( p, i) -> i + "" ),
     ACK( 'd', (p, i) -> p.getSrc() + " " + i ),
+    LAT_PRO('p', (p, i) -> "" ),
+    LAT_ACK('a', (p, i) -> "" ),
+    LAT_NACK( 'n', (p, i) -> ""),
     UNKNOWN('u', (p, i) -> "");
 
     private interface PacketLambda
