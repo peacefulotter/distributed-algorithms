@@ -16,13 +16,15 @@ class PerfectLinkTest
     // python3 stress.py -r ../template_java/run.sh -t fifo -l ./output -p 5 -m 500
     // python3 validate_fifo.py --proc_num 5 --output ./output/
 
+    // python3 ./stress.py agreement -r ../template_java/run.sh -l ./output -p 3 -n 5 -v 10 -d 5
+
     protected static void serverTest( SocketService service, Logger.Color color )
     {
         new Thread( () -> {
             Logger.addColor( color );
             Main.initSignalHandlers( service );
             long t1 = System.nanoTime();
-            Pool pool = Main.invokeFIFOServer( service );
+            Pool pool = Main.invokeLATServer( service );
             pool.start();
             long t2 = System.nanoTime();
             long delta = (t2 - t1) / 1000000;
@@ -40,22 +42,6 @@ class PerfectLinkTest
         };
     }
 
-//    protected static SocketService sender( int id, Logger.Color color )
-//    {
-//        ParserResult r = Main.parseArgs( getArgs( id ) );
-//        SocketService s = new PLSender( r.host, r.dest, r.output, r.config );
-//        s.setColor( color );
-//        return s;
-//    }
-//
-//    protected static SocketService receiver( int id )
-//    {
-//        ParserResult r = Main.parseArgs( getArgs( id ) );
-//        SocketService s = new Receiver( r.host, r.output );
-//        s.setColor( Logger.Color.RED );
-//        return s;
-//    }
-//
     protected static void hold( long time )
     {
         try
@@ -86,11 +72,4 @@ class PerfectLinkTest
 
         hold(60 * 60 * 1000);
     }
-
-    // URB
-    // ================
-    // 18_559_824
-    // 6000 - 11351 ms
-    // ================
-
 }

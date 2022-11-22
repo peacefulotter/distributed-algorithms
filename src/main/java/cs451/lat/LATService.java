@@ -1,52 +1,54 @@
 package cs451.lat;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LATService
 {
+    private static class Ack extends AtomicInteger
+    {
+        public Ack()
+        {
+            super( 0 );
+        }
+
+        public void reset()
+        {
+            set( 0 );
+        }
+    }
+
+
     private final Ack ack_count = new Ack();
     private final Ack nack_count = new Ack();
+    public final AtomicInteger active_proposal_number = new AtomicInteger( 0 );
 
     public boolean active = false;
-    public int active_proposal_number = 0;
-    public Set<Integer> proposedValue = new HashSet<>();
+    public Proposal proposedValue = new Proposal();
 
     private final int nbHosts;
-
-    private static class Ack
-    {
-        private final AtomicInteger ack = new AtomicInteger(0);
-        public int incrementAndGet() { return ack.incrementAndGet(); }
-        public int get() { return ack.get(); }
-        public void reset() { ack.set( 0 ); }
-
-    }
 
     public LATService( int nbHosts )
     {
         this.nbHosts = nbHosts;
     }
 
-    private boolean notMajority( int acks)
+    private boolean notMajority( int acks )
     {
         return !(acks > (nbHosts / 2f));
     }
 
-    public boolean checkProposalFinished( int acks, int nacks )
+    public void checkProposalFinished( int acks, int nacks )
     {
         if ( nacks <= 0 || notMajority( acks + nacks ) || !active )
-            return false;
+            return;
 
-        active_proposal_number++;
+        active_proposal_number.incrementAndGet();
         ack_count.reset();
         nack_count.reset();
         // ((LATSender) sender).sendProposal();
-        return true;
     }
 
-    public void checkDecide(int acks)
+    public void checkDecide( int acks )
     {
         if ( notMajority( acks ) || !active )
             return;
@@ -60,7 +62,7 @@ public class LATService
         int acks = ack_count.incrementAndGet();
         int nacks = nack_count.get();
         checkProposalFinished( acks, nacks );
-        checkDecide(acks);
+        checkDecide( acks );
     }
 
     public void incNackCount()

@@ -6,12 +6,14 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Set;
+import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class FileHandler
 {
     private final String path;
-    private final ConcurrentLinkedQueue<String> messages;
+    private final ConcurrentLinkedQueue<Set<Integer>> messages;
 
     public FileHandler( String path )
     {
@@ -36,7 +38,7 @@ public class FileHandler
 
     public void register( Packet p )
     {
-        messages.addAll( p.getFileLines() );
+        messages.add( p.getFileLines() );
     }
 
     /**
@@ -46,7 +48,11 @@ public class FileHandler
     {
         try ( PrintWriter pw = new PrintWriter( new FileOutputStream( path, true ) ) )
         {
-            messages.forEach( pw::println );
+            messages.forEach( line -> {
+                StringJoiner sj = new StringJoiner( " " );
+                line.forEach( i -> sj.add( String.valueOf( i ) ) );
+                pw.println(line);
+            } );
         } catch ( IOException e )
         {
             e.printStackTrace();

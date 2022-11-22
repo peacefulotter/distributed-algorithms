@@ -4,6 +4,7 @@ import cs451.beb.BEBReceiver;
 import cs451.network.SocketService;
 import cs451.packet.Packet;
 import cs451.packet.PacketTypes;
+import cs451.packet.SetPacket;
 
 import java.util.Set;
 
@@ -19,28 +20,29 @@ public class LATReceiver extends BEBReceiver
         this.lat = lat;
     }
 
-    public void onPacket( Packet packet )
+    public void onPacket( Packet p )
     {
-        if ( packet.getType() == PacketTypes.LAT_PRO )
-            onProposal();
-        else if ( packet.getType() == PacketTypes.LAT_ACK )
-            onLatAck();
-        else if ( packet.getType() == PacketTypes.LAT_NACK )
-            onLatNack();
-        else
-            super.onPacket( packet );
+        switch ( p.type )
+        {
+            case LAT_PROP -> onProposal( p.seq, ((SetPacket) p).proposal, p.src );
+            case LAT_NACK -> onLatNack( p.seq, ((SetPacket) p).proposal );
+            case LAT_ACK -> onLatAck( p.seq );
+            default -> super.onPacket( p );
+        }
     }
 
+    /* upon reception of <ACK, proposal_number>
+     *  s.t. proposal_number == active_proposal_number */
     public void onLatAck( int proposal_number )
     {
-        if ( proposal_number != lat.active_proposal_number )
+        if ( proposal_number != lat.active_proposal_number.get() )
             return;
         lat.incAckCount();
     }
 
-    public void onLatNack(int proposal_number, Set<Integer> value)
+    public void onLatNack( int proposal_number, Proposal value )
     {
-        if ( proposal_number != lat.active_proposal_number )
+        if ( proposal_number != lat.active_proposal_number.get() )
             return;
 
         lat.proposedValue.addAll( value );
@@ -48,17 +50,25 @@ public class LATReceiver extends BEBReceiver
     }
 
     // acceptor
-    private void onProposal( Set<Integer> proposed_value, int proposal_number )
+    private void onAckProposal( int proposal_number, Proposal proposed_value, int src )
     {
-        if ( proposed_value.containsAll( accepted_value ))
-        {
-            accepted_value = proposed_value;
-            ((LATSender) sender).sendAck(proposal_number );
-        }
+        accepted_value = proposed_value;
+        ((LATSender) sender).sendAck( proposal_number, src );
+    }
+
+    private void onNackProposal( int proposal_number, Proposal proposed_value, int src )
+    {
+        accepted_value.addAll( proposed_value );
+        ((LATSender) sender).sendNack( proposed_value, proposal_number, src );
+    }
+
+    private void onProposal( int proposal_number, Proposal proposed_value, int src )
+    {
+        boolean isSubset = proposed_value.containsAll( accepted_value );
+        if ( isSubset )
+            onAckProposal( proposal_number, proposed_value, src );
         else
-        {
-            accepted_value.addAll( proposed_value );
-            ((LATSender) sender).sendNack( proposed_value, proposal_number );
-        }
+            onNackProposal( proposal_number, proposed_value, src );
+
     }
 }

@@ -2,9 +2,10 @@ package cs451;
 
 import cs451.beb.BEBReceiver;
 import cs451.beb.BEBSender;
-import cs451.fifo.FIFOReceiver;
-import cs451.fifo.FIFOSender;
-import cs451.parser.FIFOConfig;
+import cs451.lat.LATReceiver;
+import cs451.lat.LATSender;
+import cs451.lat.LATService;
+import cs451.parser.LATConfig;
 import cs451.network.*;
 import cs451.parser.HostsParser;
 import cs451.parser.Parser;
@@ -41,17 +42,14 @@ public class Main {
         Parser parser = new Parser(args);
         HostsParser hostsParser = parser.parse();
         List<Host> hosts = hostsParser.getHosts();
-        FIFOConfig config = new FIFOConfig( parser.config() );
+        LATConfig config = new LATConfig( parser.config() );
 
         printDetails( parser );
 
         int id = parser.myId();
         String output = parser.output();
         Host host = hosts.get( id - 1 );
-        ParserResult res = new ParserResult( host, hosts, output, config );
-        System.out.println(res);
-
-        return res;
+        return new ParserResult( host, hosts, output, config );
     }
 
     public static Pool invokeBEBServer( SocketService service )
@@ -68,10 +66,11 @@ public class Main {
         return Pool.getPool( sender, receiver );
     }
 
-    public static Pool invokeFIFOServer( SocketService service )
+    public static Pool invokeLATServer( SocketService service )
     {
-        PLSender sender = new FIFOSender( service );
-        PLReceiver receiver = new FIFOReceiver( service );
+        LATService lat = new LATService( service.getNbHosts() );
+        PLSender sender = new LATSender( service, lat );
+        PLReceiver receiver = new LATReceiver( service, lat );
         return Pool.getPool( sender, receiver );
     }
 
@@ -79,7 +78,7 @@ public class Main {
     {
         ParserResult result = parseArgs( args );
         SocketService service = new SocketService( result );
-        Pool pool = invokeFIFOServer( service );
+        Pool pool = invokeLATServer( service );
         initSignalHandlers( service );
         pool.start();
     }

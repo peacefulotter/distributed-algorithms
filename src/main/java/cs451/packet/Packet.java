@@ -4,16 +4,25 @@ import cs451.Host;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.util.Comparator;
 import java.util.Objects;
 
 public class Packet extends Message
 {
-    private final Host dest;
+    public static final int BUFFER_CAPACITY = 14;
 
-    public Packet( PacketTypes type, int seq, int origin, int src, Host dest, int messages )
+    public final Host dest;
+
+    public Packet( PacketTypes type, int seq, int origin, int src, Host dest )
     {
-        super(type, seq, origin, src, messages);
+        super(type, seq, origin, src );
         this.dest = dest;
+    }
+
+    public Packet( PacketTypes type, int seq, int origin, int src, int dest )
+    {
+        this( type, seq, origin, src, Host.findById.get(dest) );
     }
 
     public Packet( Message msg, Host dest )
@@ -22,18 +31,28 @@ public class Packet extends Message
         this.dest = dest;
     }
 
-    public Packet( DatagramPacket from, Host dest )
+    public static Packet fromDatagram( PacketTypes type, DatagramPacket from, Host dest )
     {
-        super( from );
-        this.dest = dest;
+        ByteBuffer bb = getBuffer( from );
+        return new Packet(
+            type,
+            bb.getInt(),
+            bb.getInt(),
+            bb.getInt(),
+            dest
+        );
     }
 
+    public static ByteBuffer getBuffer( DatagramPacket dp )
+    {
+        return ByteBuffer.wrap(dp.getData());
+    }
 
     private static Packet inverse( PacketTypes type, Packet packet )
     {
         int src = packet.getDestId();
         Host dest = Host.findById.get( packet.getSrc() );
-        return new Packet( type, packet.getSeqNr(), packet.getOrigin(), src, dest, packet.getMessages() );
+        return new Packet( type, packet.getSeqNr(), packet.getOrigin(), src, dest );
     }
 
     /**
@@ -54,12 +73,30 @@ public class Packet extends Message
 
     public Packet withType( PacketTypes pt )
     {
-        return new Packet( pt, seq, origin, src, dest, messages );
+        return new Packet( pt, seq, origin, src, dest );
     }
 
     public Packet getRelay()
     {
-        return new Packet( type, seq, origin, origin, dest, messages );
+        return new Packet( type, seq, origin, origin, dest );
+    }
+
+
+    protected ByteBuffer getPacketBuffer( int capacity )
+    {
+        ByteBuffer buffer = ByteBuffer.allocate( capacity );
+        // total max: 14
+        buffer.putChar( type.getTag() ); // 2 bytes
+        buffer.putInt( seq ); // 4 bytes
+        buffer.putInt( origin ); // 4 bytes
+        buffer.putInt( src ); // 4 bytes
+        return buffer;
+    }
+
+    public DatagramPacket getDatagram()
+    {
+        ByteBuffer bb = getPacketBuffer( BUFFER_CAPACITY );
+        return new DatagramPacket( bb.array(), bb.capacity() );
     }
 
     @Override
@@ -74,26 +111,22 @@ public class Packet extends Message
     @Override
     public int hashCode()
     {
-        return Objects.hash( type, seq, origin, src, getDestId() );
+        int hash = super.hashCode();
+        hash = 89 * hash + Objects.hash( getDestId() );
+        return hash;
     }
 
     @Override
     public String toString()
     {
-        return "TYPE=" + type +
-            ", ORG=" + origin +
-            ", SRC=" + src +
-            ", DST=" + getDestId() +
-            ", SEQ=" + seq +
-            ", MSG=" + messages;
+        return super.toString() + ", DST=" + getDestId();
     }
 
     @Override
-    public int compareTo( Packet o )
+    protected Comparator<Message> getComparator()
     {
-        return getComparator()
-            .thenComparing( m -> ((Packet) m).getDestId() )
-            .compare( this, o );
+        return super.getComparator()
+            .thenComparing( m -> ((Packet) m).getDestId() );
     }
 
     public int getDestId() { return dest.getId(); }

@@ -59,16 +59,18 @@ public class PLReceiver extends SocketHandler
         return packet;
     }
 
-    public void onPacket( Packet packet )
+    private void onBroadcast( Packet p )
     {
-        if ( packet.getType() == PacketTypes.BRC )
+        sendAck( p );
+        onReceiveBroadcast( p );
+    }
+
+    public void onPacket( Packet p )
+    {
+        switch ( p.type )
         {
-            sendAck( packet );
-            onReceiveBroadcast( packet );
-        }
-        else if ( packet.getType() == PacketTypes.ACK )
-        {
-            sender.onAcknowledge( packet );
+            case BRC -> onBroadcast(p);
+            case ACK -> sender.onAcknowledge( p );
         }
     }
 

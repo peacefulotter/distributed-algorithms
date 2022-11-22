@@ -25,13 +25,12 @@ public class SocketService
 
     public final AtomicBoolean closed;
     public final Timeout timeout;
-    public final int id, nbMessages;
+    public final int id;
 
     public SocketService( ParserResult result )
     {
         this.host = result.host;
         this.hosts = result.hosts;
-        this.nbMessages = result.config.getM();
 
         this.id = host.getId();
         try
@@ -58,9 +57,9 @@ public class SocketService
     {
         try
         {
-            DatagramPacket packet = new DatagramPacket(buf, buf.length);
-            socket.receive( packet );
-            return new Packet( packet, host );
+            DatagramPacket dp = new DatagramPacket(buf, buf.length);
+            socket.receive( dp );
+            return PacketTypes.parseDatagram( dp, host );
         }
         catch ( SocketTimeoutException | PortUnreachableException | ClosedChannelException e ) {
             Logger.log( e.getMessage() );
