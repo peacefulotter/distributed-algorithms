@@ -52,23 +52,9 @@ public class Main {
         return new ParserResult( host, hosts, output, config );
     }
 
-    public static Pool invokeBEBServer( SocketService service )
-    {
-        PLSender sender = new BEBSender( service );
-        PLReceiver receiver = new BEBReceiver( service );
-        return Pool.getPool( sender, receiver );
-    }
-
-    public static Pool invokeURBServer( SocketService service )
-    {
-        PLSender sender = new URBSender( service );
-        PLReceiver receiver = new URBReceiver( service );
-        return Pool.getPool( sender, receiver );
-    }
-
     public static Pool invokeLATServer( SocketService service )
     {
-        LATService lat = new LATService( service.getNbHosts() );
+        LATService lat = new LATService( service );
         PLSender sender = new LATSender( service, lat );
         PLReceiver receiver = new LATReceiver( service, lat );
         return Pool.getPool( sender, receiver );

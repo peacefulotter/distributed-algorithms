@@ -44,7 +44,6 @@ public class PLReceiver extends SocketHandler
         log( "Delivering : " + packet );
         delivered.add( hc );
         sender.onDeliver( packet );
-        service.registerDeliver( packet );
     }
 
     public void onReceiveBroadcast( Packet packet )
@@ -67,11 +66,10 @@ public class PLReceiver extends SocketHandler
 
     public void onPacket( Packet p )
     {
-        switch ( p.type )
-        {
-            case BRC -> onBroadcast(p);
-            case ACK -> sender.onAcknowledge( p );
-        }
+        if ( p.type == PacketTypes.BRC )
+            onBroadcast(p);
+        else if ( p.type == PacketTypes.ACK )
+            sender.onAcknowledge( p );
     }
 
     @Override

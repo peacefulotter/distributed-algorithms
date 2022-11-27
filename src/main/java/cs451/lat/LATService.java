@@ -1,9 +1,13 @@
 package cs451.lat;
 
+import cs451.network.SocketService;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LATService
 {
+    public static final int SEND_PROPOSAL = 1;
+
     private static class Ack extends AtomicInteger
     {
         public Ack()
@@ -18,18 +22,19 @@ public class LATService
     }
 
 
-    private final Ack ack_count = new Ack();
-    private final Ack nack_count = new Ack();
+    public final Ack ack_count = new Ack();
+    public final Ack nack_count = new Ack();
     public final AtomicInteger active_proposal_number = new AtomicInteger( 0 );
 
-    public boolean active = false;
     public Proposal proposedValue = new Proposal();
 
+    private final SocketService service;
     private final int nbHosts;
 
-    public LATService( int nbHosts )
+    public LATService( SocketService service )
     {
-        this.nbHosts = nbHosts;
+        this.service = service;
+        this.nbHosts = service.getNbHosts();
     }
 
     private boolean notMajority( int acks )
@@ -37,38 +42,43 @@ public class LATService
         return !(acks > (nbHosts / 2f));
     }
 
-    public void checkProposalFinished( int acks, int nacks )
+    // upon nack_count > 0 and ack_count + nack_count >= f+1
+    public void checkProposalFinished( LATSender sender, int acks, int nacks )
     {
-        if ( nacks <= 0 || notMajority( acks + nacks ) || !active )
+        if ( nacks <= 0 || notMajority( acks + nacks ) )
             return;
 
-        active_proposal_number.incrementAndGet();
-        ack_count.reset();
-        nack_count.reset();
-        // ((LATSender) sender).sendProposal();
+        sender.sendProposal();
     }
 
+    // upon ack_count >= f+1
     public void checkDecide( int acks )
     {
-        if ( notMajority( acks ) || !active )
+        if ( notMajority( acks ) )
             return;
 
-        // TODO: decide(proposed_value)
-        active = false;
+        service.registerProposal( proposedValue );
     }
 
-    public void incAckCount()
+    public void onAck( LATSender sender )
     {
         int acks = ack_count.incrementAndGet();
         int nacks = nack_count.get();
-        checkProposalFinished( acks, nacks );
+        checkProposalFinished( sender, acks, nacks );
         checkDecide( acks );
     }
 
-    public void incNackCount()
+    public void onNack( LATSender sender, Proposal value )
     {
+        proposedValue.addAll( value );
         int acks = ack_count.get();
         int nacks = nack_count.incrementAndGet();
-        checkProposalFinished( acks, nacks );
+        checkProposalFinished( sender, acks, nacks );
+    }
+
+    public void resetAcks()
+    {
+        ack_count.reset();
+        nack_count.reset();
     }
 }

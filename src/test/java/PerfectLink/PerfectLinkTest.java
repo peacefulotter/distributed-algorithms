@@ -38,7 +38,7 @@ class PerfectLinkTest
             "--id", id + "",
             "--hosts", "../example/hosts",
             "--output", "../example/output/" + id + ".output",
-            "../example/configs/fifo-broadcast.config"
+            "../example/configs/lattice-agreement-" + id + ".config"
         };
     }
 

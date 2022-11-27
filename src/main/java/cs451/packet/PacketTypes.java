@@ -28,13 +28,12 @@ public enum PacketTypes
     {
         ByteBuffer buffer = Packet.getBuffer( dp );
         PacketTypes type = parseType( buffer.getChar() );
-
-        return switch ( type.packetClass )
-        {
-            case NORMAL -> Packet.fromDatagram( type, dp, host );
-            case SET -> SetPacket.fromDatagram( type, dp, host );
-            case UNKNOWN -> null;
-        };
+        System.out.println(type);
+        if ( type.packetClass == PacketClass.NORMAL )
+            return Packet.fromDatagram( buffer, type, dp, host );
+        else if ( type.packetClass == PacketClass.SET )
+            return SetPacket.fromDatagram( buffer, type, dp, host );
+        return null;
     }
 
     public static PacketTypes parseType( char tag )

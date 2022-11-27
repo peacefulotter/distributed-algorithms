@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 public class LATConfig
 {
     public final int p, vs, ds;
-    public final List<Set<Integer>> proposals;
+    public final Queue<Set<Integer>> proposals;
 
     public LATConfig( String path )
     {
@@ -22,7 +22,7 @@ public class LATConfig
             vs = Integer.parseInt( split[1] );
             ds = Integer.parseInt( split[2] );
 
-            proposals = new ArrayList<>(p);
+            proposals = new ArrayDeque<>(p);
 
             while ( (line = r.readLine()) != null)
             {
@@ -59,7 +59,7 @@ public class LATConfig
         return ds;
     }
 
-    public List<Set<Integer>> getProposals()
+    public Queue<Set<Integer>> getProposals()
     {
         return proposals;
     }

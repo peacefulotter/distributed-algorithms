@@ -1,5 +1,6 @@
 package cs451.lat;
 
+import cs451.Host;
 import cs451.beb.BEBSender;
 import cs451.network.SocketService;
 import cs451.packet.*;
@@ -9,8 +10,6 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 public class LATSender extends BEBSender
 {
-    private boolean status = false;
-
     private final LATService lat;
 
     public LATSender( SocketService service, LATService lat )
@@ -19,25 +18,40 @@ public class LATSender extends BEBSender
         this.lat = lat;
     }
 
-    // TODO: this should override broadcast
-    /* upon propose(Set proposal) */
-    public void propose( Proposal proposal )
+    private void latBroadcast( SetMessage msg )
     {
-        lat.proposedValue = new Proposal( proposal );
-        status = true;
-        sendProposal();
+        Packet packet;
+        for ( Host dest : service.getHosts() )
+        {
+            packet = new SetPacket( msg, dest );
+            pp2pBroadcast( packet );
+        }
     }
 
-    public void sendProposal()
+    /* upon propose(Set proposal) */
+    @Override
+    public void propose( SetMessage msg )
+    {
+        lat.proposedValue = msg.proposal;
+        latBroadcast( msg );
+    }
+
+    private SetMessage getProposalMsg()
     {
         int apn = lat.active_proposal_number.incrementAndGet();
-        SetMessage msg = new SetMessage(
+        lat.resetAcks();
+        return new SetMessage(
             PacketTypes.LAT_PROP,
             apn,
             service.id,
             service.id,
             lat.proposedValue
         );
+    }
+
+    public void sendProposal()
+    {
+        SetMessage msg = getProposalMsg();
         addBroadcastQueue( msg );
     }
 

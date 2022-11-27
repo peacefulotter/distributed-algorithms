@@ -6,7 +6,7 @@ import cs451.packet.Message;
 import cs451.packet.Packet;
 import cs451.packet.PacketTypes;
 
-public class URBSender extends BEBSender
+abstract public class URBSender extends BEBSender
 {
     public URBSender( SocketService service )
     {
@@ -15,11 +15,10 @@ public class URBSender extends BEBSender
 
     public void relayBroadcast( Packet packet )
     {
-        Message msg = new Message( PacketTypes.BRC, packet.getSeqNr(), packet.getOrigin(), service.id, packet.getMessages() );
+        Message msg = new Message( PacketTypes.BRC, packet.getSeqNr(), packet.getOrigin(), service.id );
         addBroadcastQueue( msg );
     }
 
-    @Override
     public void broadcast( Message msg )
     {
         ((URBReceiver) receiver).createEmptyMajority( msg );

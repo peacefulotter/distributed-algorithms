@@ -1,6 +1,7 @@
 package cs451.network;
 
 import cs451.Host;
+import cs451.lat.Proposal;
 import cs451.packet.PacketTypes;
 import cs451.parser.ParserResult;
 import cs451.utils.FileHandler;
@@ -11,6 +12,8 @@ import java.io.IOException;
 import java.net.*;
 import java.nio.channels.ClosedChannelException;
 import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SocketService
@@ -23,6 +26,7 @@ public class SocketService
     protected final DatagramSocket socket;
     protected final Host host;
 
+    public final Queue<Set<Integer>> proposals;
     public final AtomicBoolean closed;
     public final Timeout timeout;
     public final int id;
@@ -31,6 +35,7 @@ public class SocketService
     {
         this.host = result.host;
         this.hosts = result.hosts;
+        this.proposals = result.config.proposals;
 
         this.id = host.getId();
         try
@@ -94,14 +99,9 @@ public class SocketService
         return true;
     }
 
-    public void register( Packet packet )
+    public void registerProposal( Proposal proposal )
     {
-        this.handler.register( packet );
-    }
-
-    public void registerDeliver( Packet packet )
-    {
-        register( packet.withType( PacketTypes.ACK ) );
+        this.handler.register( proposal );
     }
 
     public void terminate( Exception e )

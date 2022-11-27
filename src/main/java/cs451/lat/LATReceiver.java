@@ -6,7 +6,10 @@ import cs451.packet.Packet;
 import cs451.packet.PacketTypes;
 import cs451.packet.SetPacket;
 
+import java.util.HashSet;
 import java.util.Set;
+
+import static cs451.lat.LATService.SEND_PROPOSAL;
 
 public class LATReceiver extends BEBReceiver
 {
@@ -18,17 +21,19 @@ public class LATReceiver extends BEBReceiver
     {
         super( service );
         this.lat = lat;
+        this.accepted_value = new HashSet<>();
     }
 
     public void onPacket( Packet p )
     {
-        switch ( p.type )
-        {
-            case LAT_PROP -> onProposal( p.seq, ((SetPacket) p).proposal, p.src );
-            case LAT_NACK -> onLatNack( p.seq, ((SetPacket) p).proposal );
-            case LAT_ACK -> onLatAck( p.seq );
-            default -> super.onPacket( p );
-        }
+        if ( p.type == PacketTypes.LAT_PROP )
+            onProposal( p.seq, ((SetPacket) p).proposal, p.src );
+        else if ( p.type == PacketTypes.LAT_NACK )
+            onLatNack( p.seq, ((SetPacket) p).proposal );
+        else if ( p.type == PacketTypes.LAT_ACK )
+            onLatAck( p.seq );
+        else
+            super.onPacket( p );
     }
 
     /* upon reception of <ACK, proposal_number>
@@ -37,16 +42,18 @@ public class LATReceiver extends BEBReceiver
     {
         if ( proposal_number != lat.active_proposal_number.get() )
             return;
-        lat.incAckCount();
+
+        lat.onAck((LATSender) sender);
     }
 
+    /* upon reception of <NACK, proposal_number, value>
+     *  s.t. proposal_number == active_proposal_number */
     public void onLatNack( int proposal_number, Proposal value )
     {
         if ( proposal_number != lat.active_proposal_number.get() )
             return;
 
-        lat.proposedValue.addAll( value );
-        lat.incNackCount();
+        lat.onNack((LATSender) sender, value );
     }
 
     // acceptor
@@ -64,11 +71,11 @@ public class LATReceiver extends BEBReceiver
 
     private void onProposal( int proposal_number, Proposal proposed_value, int src )
     {
+        System.out.println("onProposal: proposed_value=" + proposed_value + "  , accepted_value=" + accepted_value );
         boolean isSubset = proposed_value.containsAll( accepted_value );
         if ( isSubset )
             onAckProposal( proposal_number, proposed_value, src );
         else
             onNackProposal( proposal_number, proposed_value, src );
-
     }
 }

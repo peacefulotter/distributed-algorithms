@@ -1,5 +1,6 @@
 package cs451.utils;
 
+import cs451.lat.Proposal;
 import cs451.packet.Packet;
 
 import java.io.FileNotFoundException;
@@ -36,9 +37,9 @@ public class FileHandler
         }
     }
 
-    public void register( Packet p )
+    public void register( Proposal proposal )
     {
-        messages.add( p.getFileLines() );
+        messages.add( proposal );
     }
 
     /**

@@ -19,14 +19,9 @@ public class SetMessage extends Message
             throw new RuntimeException("SetPacket PacketClass not SET");
     }
 
-    public SetMessage( Message msg, Proposal proposal )
+    public SetMessage( Set<Integer> proposal, int seq, int src )
     {
-        this( msg.type, msg.seq, msg.origin, msg.src, proposal );
-    }
-
-    private SetMessage( Packet p, Proposal proposal )
-    {
-        this( p.type, p.seq, p.origin, p.src, proposal);
+        this( PacketTypes.LAT_PROP, seq, src, src, new Proposal( proposal ) );
     }
 
     @Override

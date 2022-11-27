@@ -13,15 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class PLSender extends SocketHandler
 {
-    protected static final int PACKETS_TO_SEND = 1;
-
     private final Timer timer;
 
     protected final ConcurrentLinkedQueue<Message> toBroadcast;
     protected final ConcurrentLinkedQueue<Packet> toSend;
     protected final ConcurrentSkipListSet<Packet> pendingAck;
 
-    protected final AtomicInteger packetsToSend;
+    protected final AtomicInteger proposalsToSend;
 
     protected PLReceiver receiver;
 
@@ -32,7 +30,7 @@ public abstract class PLSender extends SocketHandler
         this.toBroadcast = new ConcurrentLinkedQueue<>();
         this.toSend = new ConcurrentLinkedQueue<>();
         this.pendingAck = new ConcurrentSkipListSet<>();
-        this.packetsToSend = new AtomicInteger( PACKETS_TO_SEND );
+        this.proposalsToSend = new AtomicInteger( 1 );
     }
 
     public void addBroadcastQueue( Message msg )
@@ -69,13 +67,8 @@ public abstract class PLSender extends SocketHandler
 
     public void onDeliver( Packet packet )
     {
-        if ( packet.getOrigin() == service.id )
-            System.out.println( packetsToSend.incrementAndGet() );
-    }
-
-    protected void register( Message m )
-    {
-        service.register( new Packet( m, service.getSelf() ) );
+        // if ( packet.getOrigin() == service.id )
+        //     System.out.println( packetsToSend.incrementAndGet() );
     }
 
     public void pp2pBroadcast( Packet packet )

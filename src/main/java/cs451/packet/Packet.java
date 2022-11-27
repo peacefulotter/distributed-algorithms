@@ -31,9 +31,8 @@ public class Packet extends Message
         this.dest = dest;
     }
 
-    public static Packet fromDatagram( PacketTypes type, DatagramPacket from, Host dest )
+    public static Packet fromDatagram( ByteBuffer bb, PacketTypes type, DatagramPacket from, Host dest )
     {
-        ByteBuffer bb = getBuffer( from );
         return new Packet(
             type,
             bb.getInt(),

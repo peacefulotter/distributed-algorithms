@@ -2,13 +2,16 @@ package cs451.beb;
 
 import cs451.Host;
 import cs451.packet.Message;
+import cs451.packet.SetMessage;
 import cs451.pl.PLSender;
 import cs451.network.SocketService;
 import cs451.packet.Packet;
 import cs451.utils.Logger;
 import cs451.utils.Sleeper;
 
-public class BEBSender extends PLSender
+import java.util.Set;
+
+abstract public class BEBSender extends PLSender
 {
     public BEBSender( SocketService service )
     {
@@ -30,10 +33,12 @@ public class BEBSender extends PLSender
         }
     }
 
+    abstract public void propose( SetMessage msg );
+
     @Override
     public void run()
     {
-        Message msg = Message.getFirst( service );
+        int seq = 1;
         while ( !service.closed.get() )
         {
             if ( !toBroadcast.isEmpty() )
@@ -49,15 +54,16 @@ public class BEBSender extends PLSender
                 Logger.log( "BEBSender","toSend - Sent packet " + p );
             }
             else if (
-                packetsToSend.get() > 0 &&
-                msg.seq <= service.nbMessages
+                proposalsToSend.get() > 0 &&
+                !service.proposals.isEmpty()
             )
             {
-                System.out.println( packetsToSend.decrementAndGet() );
-                broadcast( msg );
-                register( msg );
+                System.out.println( proposalsToSend.decrementAndGet() );
+                Set<Integer> proposal = service.proposals.poll();
+                SetMessage msg = new SetMessage( proposal, seq, service.id );
+                propose( msg );
+                seq++;
                 Logger.log( "BEBSender","normal - Sent packet " + msg );
-                msg = msg.getNext( service );
             }
             Sleeper.release();
         }

@@ -23,10 +23,10 @@ public class SetPacket extends Packet
         this.proposal = proposal;
     }
 
-    public SetPacket( Message msg, Host dest, Proposal proposal )
+    public SetPacket( SetMessage msg, Host dest )
     {
         super( msg, dest );
-        this.proposal = proposal;
+        this.proposal = msg.proposal;
     }
 
     private SetPacket( Packet p, Proposal proposal )
@@ -34,11 +34,12 @@ public class SetPacket extends Packet
         this( p.type, p.seq, p.origin, p.src, p.getDestId(), proposal);
     }
 
-    public static SetPacket fromDatagram( PacketTypes type, DatagramPacket from, Host dest )
+    public static SetPacket fromDatagram( ByteBuffer bb, PacketTypes type, DatagramPacket from, Host dest )
     {
-        Packet p = Packet.fromDatagram( type, from, dest );
-        ByteBuffer bb = getBuffer( from );
+        Packet p = Packet.fromDatagram( bb, type, from, dest );
+        System.out.println(p);
         int nbProposals = bb.getInt();
+        System.out.println("nb " + nbProposals);
         Proposal proposal = new Proposal();
         for ( int i = 0; i < nbProposals; i++ )
             proposal.add( bb.getInt() );
