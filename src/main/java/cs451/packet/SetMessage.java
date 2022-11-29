@@ -10,18 +10,13 @@ public class SetMessage extends Message
 {
     public final Proposal proposal;
 
-    public SetMessage( PacketTypes type, int seq, int origin, int src, Proposal proposal )
+    public SetMessage( PacketTypes type, int round, int prop_nb, int src, Proposal proposal )
     {
-        super( type, seq, origin, src );
+        super( type, round, prop_nb, src );
         this.proposal = proposal;
 
         if ( type.getPacketClass() != PacketClass.SET )
             throw new RuntimeException("SetPacket PacketClass not SET");
-    }
-
-    public SetMessage( Set<Integer> proposal, int seq, int src )
-    {
-        this( PacketTypes.LAT_PROP, seq, src, src, new Proposal( proposal ) );
     }
 
     @Override

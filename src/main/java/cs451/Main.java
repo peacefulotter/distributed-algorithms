@@ -54,9 +54,8 @@ public class Main {
 
     public static Pool invokeLATServer( SocketService service )
     {
-        LATService lat = new LATService( service );
-        PLSender sender = new LATSender( service, lat );
-        PLReceiver receiver = new LATReceiver( service, lat );
+        PLSender sender = new LATSender( service );
+        PLReceiver receiver = new LATReceiver( service );
         return Pool.getPool( sender, receiver );
     }
 

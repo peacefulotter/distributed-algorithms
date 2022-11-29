@@ -20,8 +20,8 @@ class PerfectLinkTest
 
     protected static void serverTest( SocketService service, Logger.Color color )
     {
+        Logger.addColor( service.id, color );
         new Thread( () -> {
-            Logger.addColor( service.id, color );
             Main.initSignalHandlers( service );
             Pool pool = Main.invokeLATServer( service );
             pool.start();

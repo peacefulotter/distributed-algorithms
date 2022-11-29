@@ -49,10 +49,11 @@ public class FileHandler
     {
         try ( PrintWriter pw = new PrintWriter( new FileOutputStream( path, true ) ) )
         {
+            System.out.println("Writing messages " + messages);
             messages.forEach( line -> {
                 StringJoiner sj = new StringJoiner( " " );
                 line.forEach( i -> sj.add( String.valueOf( i ) ) );
-                pw.println(line);
+                pw.println( sj );
             } );
         } catch ( IOException e )
         {

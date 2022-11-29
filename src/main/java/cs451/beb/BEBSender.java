@@ -1,6 +1,7 @@
 package cs451.beb;
 
 import cs451.Host;
+import cs451.lat.Proposal;
 import cs451.packet.Message;
 import cs451.packet.SetMessage;
 import cs451.pl.PLSender;
@@ -33,12 +34,12 @@ abstract public class BEBSender extends PLSender
         }
     }
 
-    abstract public SetMessage propose( Set<Integer> proposal );
+    abstract public SetMessage propose( int round, Proposal proposal );
 
     @Override
     public void run()
     {
-        int seq = 1;
+        int round = 0;
         while ( !service.closed.get() )
         {
             if ( !toBroadcast.isEmpty() )
@@ -59,10 +60,10 @@ abstract public class BEBSender extends PLSender
             )
             {
                 System.out.println( "Proposals to send: " + proposalsToSend.decrementAndGet() );
-                Set<Integer> proposal = service.proposals.poll();
+                Proposal proposal = service.proposals.poll();
                 // SetMessage msg = new SetMessage( proposal, seq, service.id );
-                SetMessage msg = propose( proposal );
-                seq++;
+                SetMessage msg = propose( round, proposal );
+                round++;
                 Logger.log( "BEBSender","normal - Sent packet " + msg );
             }
             Sleeper.release();

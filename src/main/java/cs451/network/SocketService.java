@@ -26,7 +26,7 @@ public class SocketService
     protected final DatagramSocket socket;
     protected final Host host;
 
-    public final Queue<Set<Integer>> proposals;
+    public final Queue<Proposal> proposals;
     public final AtomicBoolean closed;
     public final Timeout timeout;
     public final int id;

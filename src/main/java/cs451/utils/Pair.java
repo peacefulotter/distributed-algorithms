@@ -20,7 +20,7 @@ public class Pair<A, B>
 
     public static Pair<Integer, Integer> fromMessage( Message m )
     {
-        return new Pair<>( m.getOrigin(), m.getSeqNr() );
+        return new Pair<>( m.getPropNb(), m.getRound() );
     }
 
     @Override

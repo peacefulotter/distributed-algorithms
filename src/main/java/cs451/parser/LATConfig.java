@@ -1,5 +1,7 @@
 package cs451.parser;
 
+import cs451.lat.Proposal;
+
 import java.io.*;
 import java.nio.Buffer;
 import java.nio.charset.StandardCharsets;
@@ -9,7 +11,7 @@ import java.util.stream.Collectors;
 public class LATConfig
 {
     public final int p, vs, ds;
-    public final Queue<Set<Integer>> proposals;
+    public final Queue<Proposal> proposals;
 
     public LATConfig( String path )
     {
@@ -26,11 +28,11 @@ public class LATConfig
 
             while ( (line = r.readLine()) != null)
             {
-                proposals.add(
+                proposals.add( new Proposal(
                     Arrays.stream( line.split( " " ) )
                         .map( Integer::parseInt )
                         .collect( Collectors.toSet() )
-                );
+                ) );
             }
 
             System.out.println(p);
@@ -59,7 +61,7 @@ public class LATConfig
         return ds;
     }
 
-    public Queue<Set<Integer>> getProposals()
+    public Queue<Proposal> getProposals()
     {
         return proposals;
     }

@@ -1,7 +1,5 @@
 package cs451.packet;
 
-import java.net.DatagramPacket;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 public class Message implements Comparable<Packet>
@@ -9,28 +7,28 @@ public class Message implements Comparable<Packet>
     public static final int MAX = 8;
 
     public final PacketTypes type;
-    public final int seq, origin, src;
+    public final int round, prop_nb, src;
 
-    public Message( PacketTypes type, int seq, int origin, int src )
+    public Message( PacketTypes type, int round, int prop_nb, int src )
     {
         this.type = type;
-        this.seq = seq;
-        this.origin = origin;
+        this.round = round;
+        this.prop_nb = prop_nb;
         this.src = src;
     }
 
     public Message( Message m )
     {
-        this( m.type, m.seq, m.origin, m.src );
+        this( m.type, m.round, m.prop_nb, m.src );
     }
 
     protected Comparator<Message> getComparator()
     {
         return Comparator
             .comparing( Message::getType )
-            .thenComparing( Message::getOrigin )
+            .thenComparing( Message::getPropNb )
             .thenComparing( Message::getSrc )
-            .thenComparing( Message::getSeqNr );
+            .thenComparing( Message::getRound );
     }
 
     @Override
@@ -39,8 +37,8 @@ public class Message implements Comparable<Packet>
         if ( this == o ) return true;
         if ( o == null || getClass() != o.getClass() ) return false;
         Message m = (Message) o;
-        return seq == m.seq &&
-            origin == m.origin &&
+        return round == m.round &&
+            prop_nb == m.prop_nb &&
             src == m.src &&
             type == m.type;
     }
@@ -48,21 +46,21 @@ public class Message implements Comparable<Packet>
     @Override
     public int hashCode()
     {
-        return Objects.hash( type, seq, origin, src );
+        return Objects.hash( type, round, prop_nb, src );
     }
 
     @Override
     public String toString()
     {
         return "TYPE=" + type +
-            ", SEQ=" + seq +
-            ", ORG=" + origin +
+            ", RND=" + round +
+            ", PRP=" + prop_nb +
             ", SRC=" + src;
     }
 
     public PacketTypes getType() { return type; }
-    public int getSeqNr() { return seq; }
-    public int getOrigin() { return origin; }
+    public int getRound() { return round; }
+    public int getPropNb() { return prop_nb; }
     public int getSrc() { return src; }
 
     @Override

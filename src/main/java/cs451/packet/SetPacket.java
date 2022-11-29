@@ -13,13 +13,11 @@ import java.util.Set;
 
 public class SetPacket extends Packet
 {
-    // TODO: remove origin
-
     public final Proposal proposal;
 
-    public SetPacket( PacketTypes type, int seq, int origin, int src, int dest, Proposal proposal )
+    public SetPacket( PacketTypes type, int round, int prop_nb, int src, int dest, Proposal proposal )
     {
-        super(type, seq, origin, src, dest );
+        super(type, round, prop_nb, src, dest );
         this.proposal = proposal;
     }
     public SetPacket( SetMessage msg, Host dest )
@@ -30,7 +28,7 @@ public class SetPacket extends Packet
 
     private SetPacket( Packet p, Proposal proposal )
     {
-        this( p.type, p.seq, p.origin, p.src, p.getDestId(), proposal);
+        this( p.type, p.round, p.prop_nb, p.src, p.getDestId(), proposal);
     }
 
     public static SetPacket fromDatagram( ByteBuffer bb, PacketTypes type, DatagramPacket from, Host dest )

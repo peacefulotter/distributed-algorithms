@@ -66,10 +66,12 @@ public class PLReceiver extends SocketHandler
 
     public void onPacket( Packet p )
     {
-        if ( p.type == PacketTypes.BRC )
-            onBroadcast(p);
-        else if ( p.type == PacketTypes.ACK )
+        // TODO: GROUP - LAT_ACK, LAT_NACK as ACK
+        if ( p.type == PacketTypes.ACK )
             sender.onAcknowledge( p );
+        else
+        // if ( p.type == PacketTypes.BRC )
+            onBroadcast(p);
     }
 
     @Override

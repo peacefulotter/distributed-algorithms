@@ -48,8 +48,9 @@ public class URBReceiver extends BEBReceiver
 
     private void deliverRelay( Packet p )
     {
-        Logger.log("URBReceiver", "Delivering relay " + p.getRelay() );
-        deliver( p.getRelay() );
+        throw new RuntimeException("Not implemented");
+        // Logger.log("URBReceiver", "Delivering relay " + p.getRelay() );
+        // deliver( p.getRelay() );
     }
 
     private void onRelay( Pair<Integer, Integer> p, Packet packet )

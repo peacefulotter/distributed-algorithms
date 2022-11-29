@@ -1,19 +1,11 @@
 package cs451.lat;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.SortedSet;
-import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.*;
 
-public class Proposal extends ConcurrentSkipListSet<Integer>
+public class Proposal extends HashSet<Integer>
 {
     public Proposal()
     {
-    }
-
-    public Proposal( Comparator<? super Integer> comparator )
-    {
-        super( comparator );
     }
 
     public Proposal( Collection<? extends Integer> c )
@@ -21,8 +13,13 @@ public class Proposal extends ConcurrentSkipListSet<Integer>
         super( c );
     }
 
-    public Proposal( SortedSet<Integer> s )
+    public Proposal( int initialCapacity, float loadFactor )
     {
-        super( s );
+        super( initialCapacity, loadFactor );
+    }
+
+    public Proposal( int initialCapacity )
+    {
+        super( initialCapacity );
     }
 }

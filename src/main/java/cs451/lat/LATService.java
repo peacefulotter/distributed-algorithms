@@ -7,8 +7,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class LATService
 {
-    public static final int SEND_PROPOSAL = 1;
-
     private static class Ack extends AtomicInteger
     {
         public Ack()
@@ -22,20 +20,22 @@ public class LATService
         }
     }
 
-
     public final Ack ack_count = new Ack();
     public final Ack nack_count = new Ack();
     public final AtomicInteger active_proposal_number = new AtomicInteger( 0 );
 
-    public Proposal proposedValue = new Proposal();
+    public volatile Proposal proposed_value = new Proposal();
+    public Proposal accepted_value = new Proposal();
 
     private final SocketService service;
     private final int f;
+    public final int round;
 
-    public LATService( SocketService service )
+    public LATService( SocketService service, int round )
     {
         this.service = service;
         this.f = (int) Math.floor( service.getNbHosts() / 2f );
+        this.round = round;
     }
 
     private boolean notMajority( int acks )
@@ -46,11 +46,11 @@ public class LATService
     // upon nack_count > 0 and ack_count + nack_count >= f+1
     public void checkProposalFinished( LATSender sender, int acks, int nacks )
     {
-        Logger.log(service.id, "LATService","Check proposal " + this);
+        Logger.log(service.id, "LATService round=" + round,"Check proposal " + this);
         if ( nacks <= 0 || notMajority( acks + nacks ) )
             return;
 
-        sender.sendProposal();
+        sender.sendProposal( this );
     }
 
     // upon ack_count >= f+1
@@ -59,13 +59,14 @@ public class LATService
         if ( notMajority( acks ) )
             return;
 
-        Logger.log(service.id, "LATService", "DECIDING == " + proposedValue);
+        Logger.log(service.id, "LATService round=" + round, "///// DECIDING apn=" + active_proposal_number.get() + " ////// " + proposed_value );
 
         // register decision
-        service.registerProposal( proposedValue );
-        // reset receiver and lat service
-        receiver.reset();
-        resetLatService();
+        service.registerProposal( proposed_value );
+        /*// reset receiver and lat service
+        resetLatService();*/
+        // add decided lat to receiver
+        receiver.setDecided( round );
         // move to next round -> propose new proposal
         sender.moveNextProposal();
     }
@@ -80,7 +81,7 @@ public class LATService
 
     public void onNack( LATSender sender, Proposal value )
     {
-        proposedValue.addAll( value );
+        proposed_value.addAll( value );
         int acks = ack_count.get();
         int nacks = nack_count.incrementAndGet();
         checkProposalFinished( sender, acks, nacks );
@@ -92,10 +93,12 @@ public class LATService
         nack_count.reset();
     }
 
+    // TODO: delete?
     private void resetLatService()
     {
         resetAcks();
-        proposedValue.clear();
+        proposed_value.clear();
+        accepted_value.clear();
     }
 
     @Override
@@ -103,10 +106,11 @@ public class LATService
     {
         return "{" +
             "f=" + f +
+            ", round=" + round +
             ", ack_count=" + ack_count +
             ", nack_count=" + nack_count +
             ", active_prop_nb=" + active_proposal_number +
-            ", proposedValue=" + proposedValue +
+            ", proposed_value=" + proposed_value +
             '}';
     }
 }

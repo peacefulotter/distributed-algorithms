@@ -14,15 +14,15 @@ public class Packet extends Message
 
     public final Host dest;
 
-    public Packet( PacketTypes type, int seq, int origin, int src, Host dest )
+    public Packet( PacketTypes type, int round, int prop_nb, int src, Host dest )
     {
-        super(type, seq, origin, src );
+        super(type, round, prop_nb, src );
         this.dest = dest;
     }
 
-    public Packet( PacketTypes type, int seq, int origin, int src, int dest )
+    public Packet( PacketTypes type, int round, int prop_nb, int src, int dest )
     {
-        this( type, seq, origin, src, Host.findById.get(dest) );
+        this( type, round, prop_nb, src, Host.findById.get(dest) );
     }
 
     public Packet( Message msg, Host dest )
@@ -51,7 +51,7 @@ public class Packet extends Message
     {
         int src = packet.getDestId();
         Host dest = Host.findById.get( packet.getSrc() );
-        return new Packet( type, packet.getSeqNr(), packet.getOrigin(), src, dest );
+        return new Packet( type, packet.getRound(), packet.getPropNb(), src, dest );
     }
 
     /**
@@ -72,22 +72,16 @@ public class Packet extends Message
 
     public Packet withType( PacketTypes pt )
     {
-        return new Packet( pt, seq, origin, src, dest );
+        return new Packet( pt, round, prop_nb, src, dest );
     }
-
-    public Packet getRelay()
-    {
-        return new Packet( type, seq, origin, origin, dest );
-    }
-
 
     protected ByteBuffer getPacketBuffer( int capacity )
     {
         ByteBuffer buffer = ByteBuffer.allocate( capacity );
         // total max: 14
         buffer.putChar( type.getTag() ); // 2 bytes
-        buffer.putInt( seq ); // 4 bytes
-        buffer.putInt( origin ); // 4 bytes
+        buffer.putInt( round ); // 4 bytes
+        buffer.putInt( prop_nb ); // 4 bytes
         buffer.putInt( src ); // 4 bytes
         return buffer;
     }
