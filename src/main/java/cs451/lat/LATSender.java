@@ -4,9 +4,9 @@ import cs451.Host;
 import cs451.beb.BEBSender;
 import cs451.network.SocketService;
 import cs451.packet.*;
+import cs451.utils.Logger;
 
 import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 public class LATSender extends BEBSender
 {
@@ -20,6 +20,7 @@ public class LATSender extends BEBSender
 
     private void latBroadcast( SetMessage msg )
     {
+        Logger.log(service.id, "LATSender", "Sending proposal: " + msg);
         Packet packet;
         for ( Host dest : service.getHosts() )
         {
@@ -30,13 +31,16 @@ public class LATSender extends BEBSender
 
     /* upon propose(Set proposal) */
     @Override
-    public void propose( SetMessage msg )
+    public SetMessage propose( Set<Integer> proposal )
     {
-        lat.proposedValue = msg.proposal;
+        Proposal p = new Proposal(proposal);
+        SetMessage msg = getProposalMsg( p );
+        lat.proposedValue = p;
         latBroadcast( msg );
+        return msg;
     }
 
-    private SetMessage getProposalMsg()
+    private SetMessage getProposalMsg( Proposal proposal )
     {
         int apn = lat.active_proposal_number.incrementAndGet();
         lat.resetAcks();
@@ -45,18 +49,26 @@ public class LATSender extends BEBSender
             apn,
             service.id,
             service.id,
-            lat.proposedValue
+            proposal
         );
     }
 
     public void sendProposal()
     {
-        SetMessage msg = getProposalMsg();
+        SetMessage msg = getProposalMsg( lat.proposedValue );
+        Logger.log(service.id, "LATSender", "Sending new proposal: " + msg);
         addBroadcastQueue( msg );
+    }
+
+    public void moveNextProposal()
+    {
+        Logger.log(service.id, "LATSender","Moving to next proposal");
+        proposalsToSend.incrementAndGet();
     }
 
     public void sendAck( int proposal_number, int src )
     {
+        Logger.log(service.id, "LATSender","Sending ACK: prop_nb=" + proposal_number + " to=" + src);
         Packet p = new Packet(
             PacketTypes.LAT_ACK,
             proposal_number,
@@ -67,15 +79,16 @@ public class LATSender extends BEBSender
         addSendQueue( p );
     }
 
-    public void sendNack( Proposal accepted_value, int proposal_number, int src )
+    public void sendNack( Set<Integer> accepted_value, int proposal_number, int src )
     {
+        Logger.log(service.id, "LATSender", "Sending NACK: prop_nb=" + proposal_number + " to=" + src + " acc_value=" + accepted_value);
         SetPacket p = new SetPacket(
             PacketTypes.LAT_NACK,
             proposal_number,
             service.id,
             service.id,
             src,
-            accepted_value );
+            new Proposal(accepted_value) );
         addSendQueue( p );
     }
 }

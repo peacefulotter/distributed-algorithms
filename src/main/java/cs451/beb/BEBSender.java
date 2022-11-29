@@ -33,7 +33,7 @@ abstract public class BEBSender extends PLSender
         }
     }
 
-    abstract public void propose( SetMessage msg );
+    abstract public SetMessage propose( Set<Integer> proposal );
 
     @Override
     public void run()
@@ -58,10 +58,10 @@ abstract public class BEBSender extends PLSender
                 !service.proposals.isEmpty()
             )
             {
-                System.out.println( proposalsToSend.decrementAndGet() );
+                System.out.println( "Proposals to send: " + proposalsToSend.decrementAndGet() );
                 Set<Integer> proposal = service.proposals.poll();
-                SetMessage msg = new SetMessage( proposal, seq, service.id );
-                propose( msg );
+                // SetMessage msg = new SetMessage( proposal, seq, service.id );
+                SetMessage msg = propose( proposal );
                 seq++;
                 Logger.log( "BEBSender","normal - Sent packet " + msg );
             }

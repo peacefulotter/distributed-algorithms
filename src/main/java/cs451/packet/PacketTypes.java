@@ -28,7 +28,6 @@ public enum PacketTypes
     {
         ByteBuffer buffer = Packet.getBuffer( dp );
         PacketTypes type = parseType( buffer.getChar() );
-        System.out.println(type);
         if ( type.packetClass == PacketClass.NORMAL )
             return Packet.fromDatagram( buffer, type, dp, host );
         else if ( type.packetClass == PacketClass.SET )

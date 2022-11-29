@@ -21,14 +21,10 @@ class PerfectLinkTest
     protected static void serverTest( SocketService service, Logger.Color color )
     {
         new Thread( () -> {
-            Logger.addColor( color );
+            Logger.addColor( service.id, color );
             Main.initSignalHandlers( service );
-            long t1 = System.nanoTime();
             Pool pool = Main.invokeLATServer( service );
             pool.start();
-            long t2 = System.nanoTime();
-            long delta = (t2 - t1) / 1000000;
-            System.out.println(delta + "ms");
         } ).start();
     }
 
@@ -64,11 +60,11 @@ class PerfectLinkTest
     {
         SocketService s1 = getService( 1 );
         SocketService s2 = getService( 2 );
-        SocketService s3 = getService( 3 );
+        // SocketService s3 = getService( 3 );
 
-        serverTest( s1, Logger.Color.GREEN );
+        serverTest( s1, Logger.Color.BLUE );
         serverTest( s2, Logger.Color.RED );
-        serverTest( s3, Logger.Color.BLUE );
+        // serverTest( s3, Logger.Color.BLUE );
 
         hold(60 * 60 * 1000);
     }

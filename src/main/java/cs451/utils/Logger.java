@@ -9,20 +9,27 @@ import java.util.Map;
 
 public class Logger
 {
-    private static final boolean ENABLED = false;
+    private static final boolean ENABLED = true;
+    private static final boolean DEBUG_ENABLED = false;
     private static final Clock clock = new HighLevelClock();
-    private static final Map<Long, Color> colorMap = new HashMap<>();
+    private static final Map<Integer, Color> colorMap = new HashMap<>();
 
-    public static void addColor( Color color )
+    public Logger()
     {
-        colorMap.put( Thread.currentThread().getId(), color );
+        colorMap.put( 0, Color.WHITE );
+    }
+
+    public static void addColor( int id, Color color )
+    {
+        colorMap.put( id, color );
     }
 
     public enum Color
     {
         RED("\033[31m", "\033[0m"),
-        BLUE("\033[32m", "\033[0m"),
-        GREEN("\033[34m", "\033[0m");
+        BLUE("\033[34m", "\033[0m"),
+        GREEN("\033[32m", "\033[0m"),
+        WHITE("", "");
 
         public final String c1, c2;
 
@@ -72,21 +79,33 @@ public class Logger
 
     public static void log( Object o )
     {
-        long id = Thread.currentThread().getId();
+        if ( !DEBUG_ENABLED ) return;
+        log(0, o);
+    }
+
+    public static void log( int id, Object o )
+    {
         Color color = colorMap.get( id );
-        log( color, id, o );
+        log( color, o );
     }
 
     public static void log( String prefix, Object o )
     {
-        log( "[" + prefix + "] " + o );
+        if ( !DEBUG_ENABLED ) return;
+        log( 0, "[" + prefix + "] " + o );
     }
 
-    public static void log( Logger.Color color, long id , Object o)
+    public static void log( int id, String prefix, Object o )
+    {
+        Color color = colorMap.get( id );
+        log( color, "[" + id + " " + prefix + "] " + o );
+    }
+
+    public static void log( Logger.Color color, Object o)
     {
         if ( !ENABLED ) return;
         String c1 = color == null ? "" : color.c1;
         String c2 = color == null ? "" : color.c2;
-        System.out.println(c1 + time() + " " + id + c2 + " " + o);
+        System.out.println(c1 + time() + " " + c2 + " " + o);
     }
 }

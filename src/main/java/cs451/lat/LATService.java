@@ -1,6 +1,7 @@
 package cs451.lat;
 
 import cs451.network.SocketService;
+import cs451.utils.Logger;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,22 +30,23 @@ public class LATService
     public Proposal proposedValue = new Proposal();
 
     private final SocketService service;
-    private final int nbHosts;
+    private final int f;
 
     public LATService( SocketService service )
     {
         this.service = service;
-        this.nbHosts = service.getNbHosts();
+        this.f = (int) Math.floor( service.getNbHosts() / 2f );
     }
 
     private boolean notMajority( int acks )
     {
-        return !(acks > (nbHosts / 2f));
+        return !( acks >= f + 1 );
     }
 
     // upon nack_count > 0 and ack_count + nack_count >= f+1
     public void checkProposalFinished( LATSender sender, int acks, int nacks )
     {
+        Logger.log(service.id, "LATService","Check proposal " + this);
         if ( nacks <= 0 || notMajority( acks + nacks ) )
             return;
 
@@ -52,20 +54,28 @@ public class LATService
     }
 
     // upon ack_count >= f+1
-    public void checkDecide( int acks )
+    public void checkDecide( LATSender sender, LATReceiver receiver, int acks )
     {
         if ( notMajority( acks ) )
             return;
 
+        Logger.log(service.id, "LATService", "DECIDING == " + proposedValue);
+
+        // register decision
         service.registerProposal( proposedValue );
+        // reset receiver and lat service
+        receiver.reset();
+        resetLatService();
+        // move to next round -> propose new proposal
+        sender.moveNextProposal();
     }
 
-    public void onAck( LATSender sender )
+    public void onAck( LATSender sender, LATReceiver receiver )
     {
         int acks = ack_count.incrementAndGet();
         int nacks = nack_count.get();
         checkProposalFinished( sender, acks, nacks );
-        checkDecide( acks );
+        checkDecide( sender, receiver, acks );
     }
 
     public void onNack( LATSender sender, Proposal value )
@@ -80,5 +90,23 @@ public class LATService
     {
         ack_count.reset();
         nack_count.reset();
+    }
+
+    private void resetLatService()
+    {
+        resetAcks();
+        proposedValue.clear();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "{" +
+            "f=" + f +
+            ", ack_count=" + ack_count +
+            ", nack_count=" + nack_count +
+            ", active_prop_nb=" + active_proposal_number +
+            ", proposedValue=" + proposedValue +
+            '}';
     }
 }

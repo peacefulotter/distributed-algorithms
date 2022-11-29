@@ -22,7 +22,6 @@ public class SetPacket extends Packet
         super(type, seq, origin, src, dest );
         this.proposal = proposal;
     }
-
     public SetPacket( SetMessage msg, Host dest )
     {
         super( msg, dest );
@@ -37,9 +36,7 @@ public class SetPacket extends Packet
     public static SetPacket fromDatagram( ByteBuffer bb, PacketTypes type, DatagramPacket from, Host dest )
     {
         Packet p = Packet.fromDatagram( bb, type, from, dest );
-        System.out.println(p);
         int nbProposals = bb.getInt();
-        System.out.println("nb " + nbProposals);
         Proposal proposal = new Proposal();
         for ( int i = 0; i < nbProposals; i++ )
             proposal.add( bb.getInt() );
