@@ -13,6 +13,8 @@ import java.util.Set;
 
 public class SetPacket extends Packet
 {
+    // TODO: 8 PROPOSALS at once
+
     public final Proposal proposal;
 
     public SetPacket( PacketTypes type, int round, int prop_nb, int src, int dest, Proposal proposal )

@@ -53,7 +53,7 @@ public class LATSender extends BEBSender
     public void sendProposal( LATService lat )
     {
         SetMessage msg = getProposalMsg( lat, lat.proposed_value );
-        Logger.log(service.id, "LATSender", "Sending new proposal: " + msg);
+        Logger.log(service.id, "LATSender round=" + lat.round, "Sending new proposal: " + msg);
         addBroadcastQueue( msg );
     }
 
@@ -65,7 +65,7 @@ public class LATSender extends BEBSender
 
     public void sendAck( int round, int proposal_number, int src )
     {
-        Logger.log(service.id, "LATSender","Sending ACK: prop_nb=" + proposal_number + " to=" + src);
+        Logger.log(service.id, "LATSender round=" + round,"Sending ACK: prop_nb=" + proposal_number + " to=" + src);
         Packet p = new Packet(
             PacketTypes.LAT_ACK,
             round,
@@ -78,7 +78,7 @@ public class LATSender extends BEBSender
 
     public void sendNack( int round, int proposal_number, int src, Proposal accepted_value )
     {
-        Logger.log(service.id, "LATSender", "Sending NACK: prop_nb=" + proposal_number + " to=" + src + " acc_value=" + accepted_value);
+        Logger.log(service.id, "LATSender round=" + round, "Sending NACK: prop_nb=" + proposal_number + " to=" + src + " acc_value=" + accepted_value);
         SetPacket p = new SetPacket(
             PacketTypes.LAT_NACK,
             round,

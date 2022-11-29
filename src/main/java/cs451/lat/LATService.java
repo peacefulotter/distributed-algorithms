@@ -21,7 +21,7 @@ public class LATService
     }
 
     public final Ack ack_count = new Ack();
-    public final Ack nack_count = new Ack();
+    public final Ack nack_count = new Ack(); // TODO: to AtomicBoolean
     public final AtomicInteger active_proposal_number = new AtomicInteger( 0 );
 
     public volatile Proposal proposed_value = new Proposal();
@@ -66,7 +66,7 @@ public class LATService
         /*// reset receiver and lat service
         resetLatService();*/
         // add decided lat to receiver
-        receiver.setDecided( round );
+        receiver.setDecided( round, proposed_value );
         // move to next round -> propose new proposal
         sender.moveNextProposal();
     }
