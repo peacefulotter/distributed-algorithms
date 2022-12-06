@@ -10,12 +10,14 @@ import cs451.network.SocketService;
 import cs451.packet.Packet;
 import cs451.utils.Logger;
 import cs451.utils.Sleeper;
+import cs451.utils.Stopwatch;
 
 abstract public class BEBSender extends PLSender
 {
     public BEBSender( SocketService service )
     {
         super( service );
+        Stopwatch.init();
     }
 
     public void broadcast( Message msg )
@@ -65,16 +67,17 @@ abstract public class BEBSender extends PLSender
                 Logger.log( "BEBSender","toSend - Sent packet " + p );
             }
             else if (
-                proposalsToSend.get() > 0 &&
-                !service.proposals.isEmpty()
+                !service.proposals.isEmpty() &&
+                proposalsToSend.get() > 0
             )
             {
-                System.out.println( "Proposals to send: " + proposalsToSend.decrementAndGet() );
                 Proposal proposal = service.proposals.poll();
                 // SetMessage msg = new SetMessage( proposal, seq, service.id );
                 SetMessage msg = propose( round, proposal );
                 round++;
                 Logger.log( "BEBSender","normal - Sent packet " + msg );
+                if (service.proposals.isEmpty())
+                    Stopwatch.stop();
             }
             Sleeper.release();
         }

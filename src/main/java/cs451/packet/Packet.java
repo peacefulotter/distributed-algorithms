@@ -125,4 +125,13 @@ public class Packet extends Message
     public int getDestId() { return dest.getId(); }
     public int getDestPort() { return dest.getPort(); }
     public InetAddress getDestAddress() { return dest.getAddress(); }
+
+    public static Comparator<Packet> getAckComparator()
+    {
+        return Comparator
+            .comparing( Packet::getRound )
+            .thenComparing( Packet::getPropNb )
+            .thenComparing( (a, b) -> Integer.compare( a.getDestId(), b.getSrc() ) )
+            .thenComparing( (a, b) -> Integer.compare( a.getSrc(), b.getDestId() ) );
+    }
 }

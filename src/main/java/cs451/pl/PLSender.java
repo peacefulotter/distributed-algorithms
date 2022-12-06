@@ -2,7 +2,6 @@ package cs451.pl;
 
 import cs451.network.SocketHandler;
 import cs451.network.SocketService;
-import cs451.packet.Message;
 import cs451.packet.SetMessage;
 import cs451.utils.Logger;
 import cs451.packet.Packet;
@@ -30,7 +29,7 @@ public abstract class PLSender extends SocketHandler
         this.timer = new Timer("Timer");
         this.toBroadcast = new ConcurrentLinkedQueue<>();
         this.toSend = new ConcurrentLinkedQueue<>();
-        this.pendingAck = new ConcurrentSkipListSet<>();
+        this.pendingAck = new ConcurrentSkipListSet<>( Packet.getAckComparator() );
         this.proposalsToSend = new AtomicInteger( 1 );
     }
 
@@ -77,13 +76,12 @@ public abstract class PLSender extends SocketHandler
 
     protected void onAcknowledge( Packet packet )
     {
-        Packet bp = Packet.createBRCPacket( packet );
-        System.out.println("ack: " + bp);
-        if ( !pendingAck.contains( bp ) )
+        System.out.println("ack: " + packet);
+        if ( !pendingAck.contains( packet ) )
             return;
 
-        Logger.log(  "Acknowledged " + bp );
-        pendingAck.remove( bp );
+        Logger.log(  "Acknowledged " + packet );
+        pendingAck.remove( packet );
         service.timeout.decrease( packet.getSrc() );
     }
 }
