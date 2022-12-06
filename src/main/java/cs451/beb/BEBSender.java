@@ -4,13 +4,12 @@ import cs451.Host;
 import cs451.lat.Proposal;
 import cs451.packet.Message;
 import cs451.packet.SetMessage;
+import cs451.packet.SetPacket;
 import cs451.pl.PLSender;
 import cs451.network.SocketService;
 import cs451.packet.Packet;
 import cs451.utils.Logger;
 import cs451.utils.Sleeper;
-
-import java.util.Set;
 
 abstract public class BEBSender extends PLSender
 {
@@ -24,12 +23,23 @@ abstract public class BEBSender extends PLSender
         bebBroadcast( msg );
     }
 
-    public void bebBroadcast( Message msg )
+    protected void bebBroadcast( Message msg )
     {
         Packet packet;
         for ( Host dest : service.getHosts() )
         {
             packet = new Packet( msg, dest );
+            pp2pBroadcast( packet );
+        }
+    }
+
+    protected void bebBroadcastSet( SetMessage msg )
+    {
+        Logger.log(service.id, "BEBSender", "Broadcasting msg: " + msg);
+        Packet packet;
+        for ( Host dest : service.getHosts() )
+        {
+            packet = new SetPacket( msg, dest );
             pp2pBroadcast( packet );
         }
     }
@@ -44,8 +54,8 @@ abstract public class BEBSender extends PLSender
         {
             if ( !toBroadcast.isEmpty() )
             {
-                Message m = toBroadcast.poll();
-                bebBroadcast( m );
+                SetMessage m = toBroadcast.poll();
+                bebBroadcastSet( m );
                 Logger.log( "BEBSender","toBroadcast - Broadcasted packet " + m );
             }
             else if ( !toSend.isEmpty() )

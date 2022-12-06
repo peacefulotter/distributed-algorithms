@@ -73,7 +73,6 @@ public class URBReceiver extends BEBReceiver
             majority.put( p, processes );
     }
 
-    @Override
     public void onReceiveBroadcast( Packet packet )
     {
         Pair<Integer, Integer> pair = Pair.fromMessage( packet );

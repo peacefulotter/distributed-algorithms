@@ -38,11 +38,6 @@ public class LATReceiver extends BEBReceiver
     public LATService getLat( int round )
     {
         LATService lat = latServices.get( round );
-        // && !decided.contains( round )
-        // doesnt work because p_i is gonna move on
-        // if it decides first and then p_j is never gonna get
-        // an answer from p_i
-        // store round->decision in decided?
         if ( lat == null && !decided.containsKey( round ) )
         {
             lat = new LATService( service, round );

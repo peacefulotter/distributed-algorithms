@@ -43,12 +43,6 @@ public class PLReceiver extends SocketHandler
 
         log( "Delivering : " + packet );
         delivered.add( hc );
-        sender.onDeliver( packet );
-    }
-
-    public void onReceiveBroadcast( Packet packet )
-    {
-        deliver(packet);
     }
 
     public Packet getPacket()
@@ -58,20 +52,22 @@ public class PLReceiver extends SocketHandler
         return packet;
     }
 
-    private void onBroadcast( Packet p )
+    private void handlePacket( Packet p )
     {
         sendAck( p );
-        onReceiveBroadcast( p );
+        deliver( p );
     }
 
     public void onPacket( Packet p )
     {
-        // TODO: GROUP - LAT_ACK, LAT_NACK as ACK
-        if ( p.type == PacketTypes.ACK )
+        if (
+            p.type == PacketTypes.ACK ||
+            p.type == PacketTypes.LAT_ACK  ||
+            p.type == PacketTypes.LAT_NACK
+        )
             sender.onAcknowledge( p );
         else
-        // if ( p.type == PacketTypes.BRC )
-            onBroadcast(p);
+            handlePacket(p);
     }
 
     @Override

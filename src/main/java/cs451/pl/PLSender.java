@@ -3,6 +3,7 @@ package cs451.pl;
 import cs451.network.SocketHandler;
 import cs451.network.SocketService;
 import cs451.packet.Message;
+import cs451.packet.SetMessage;
 import cs451.utils.Logger;
 import cs451.packet.Packet;
 
@@ -15,7 +16,7 @@ public abstract class PLSender extends SocketHandler
 {
     private final Timer timer;
 
-    protected final ConcurrentLinkedQueue<Message> toBroadcast;
+    protected final ConcurrentLinkedQueue<SetMessage> toBroadcast;
     protected final ConcurrentLinkedQueue<Packet> toSend;
     protected final ConcurrentSkipListSet<Packet> pendingAck;
 
@@ -33,7 +34,7 @@ public abstract class PLSender extends SocketHandler
         this.proposalsToSend = new AtomicInteger( 1 );
     }
 
-    public void addBroadcastQueue( Message msg )
+    public void addBroadcastQueue( SetMessage msg )
     {
         this.toBroadcast.add( msg );
     }
@@ -65,16 +66,11 @@ public abstract class PLSender extends SocketHandler
         timer.schedule( task, service.timeout.get( destId ) );
     }
 
-    public void onDeliver( Packet packet )
-    {
-        // if ( packet.getOrigin() == service.id )
-        //     System.out.println( packetsToSend.incrementAndGet() );
-    }
-
     public void pp2pBroadcast( Packet packet )
     {
         if ( !sendPacket( packet ) )
             return;
+        System.out.println("pl: " + packet);
         pendingAck.add( packet );
         addTimeoutTask( packet );
     }
@@ -82,6 +78,7 @@ public abstract class PLSender extends SocketHandler
     protected void onAcknowledge( Packet packet )
     {
         Packet bp = Packet.createBRCPacket( packet );
+        System.out.println("ack: " + bp);
         if ( !pendingAck.contains( bp ) )
             return;
 

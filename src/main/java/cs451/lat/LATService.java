@@ -46,7 +46,7 @@ public class LATService
     // upon nack_count > 0 and ack_count + nack_count >= f+1
     public void checkProposalFinished( LATSender sender, int acks, int nacks )
     {
-        Logger.log(service.id, "LATService round=" + round,"Check proposal " + this);
+        Logger.log(service.id, "LATService  round=" + round,"Check proposal " + this);
         if ( nacks <= 0 || notMajority( acks + nacks ) )
             return;
 
@@ -59,12 +59,10 @@ public class LATService
         if ( notMajority( acks ) )
             return;
 
-        Logger.log(service.id, "LATService round=" + round, "///// DECIDING apn=" + active_proposal_number.get() + " ////// " + proposed_value );
+        Logger.log(service.id, "LATService  round=" + round, "///// DECIDING apn=" + active_proposal_number.get() + " ////// " + proposed_value );
 
         // register decision
         service.registerProposal( proposed_value );
-        /*// reset receiver and lat service
-        resetLatService();*/
         // add decided lat to receiver
         receiver.setDecided( round, proposed_value );
         // move to next round -> propose new proposal
@@ -79,6 +77,8 @@ public class LATService
         checkDecide( sender, receiver, acks );
     }
 
+    // TODO: can decide if nack = n
+    // n = ??
     public void onNack( LATSender sender, Proposal value )
     {
         proposed_value.addAll( value );

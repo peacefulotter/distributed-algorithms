@@ -1,29 +1,15 @@
 package cs451.lat;
 
-import cs451.Host;
 import cs451.beb.BEBSender;
 import cs451.network.SocketService;
 import cs451.packet.*;
 import cs451.utils.Logger;
-
-import java.util.Set;
 
 public class LATSender extends BEBSender
 {
     public LATSender( SocketService service )
     {
         super( service );
-    }
-
-    private void latBroadcast( SetMessage msg )
-    {
-        Logger.log(service.id, "LATSender", "Sending proposal: " + msg);
-        Packet packet;
-        for ( Host dest : service.getHosts() )
-        {
-            packet = new SetPacket( msg, dest );
-            pp2pBroadcast( packet );
-        }
     }
 
     /* upon propose(Set proposal) */
@@ -33,7 +19,7 @@ public class LATSender extends BEBSender
         LATService lat = ((LATReceiver) receiver).getLat( round );
         SetMessage msg = getProposalMsg( lat, proposal );
         lat.proposed_value = proposal;
-        latBroadcast( msg );
+        bebBroadcastSet( msg );
         return msg;
     }
 
@@ -53,7 +39,8 @@ public class LATSender extends BEBSender
     public void sendProposal( LATService lat )
     {
         SetMessage msg = getProposalMsg( lat, lat.proposed_value );
-        Logger.log(service.id, "LATSender round=" + lat.round, "Sending new proposal: " + msg);
+        Logger.log(service.id, "LATSender   round=" + lat.round, "Sending new proposal: " + msg);
+        // TODO: don't broadcast to those who acked
         addBroadcastQueue( msg );
     }
 
@@ -65,7 +52,6 @@ public class LATSender extends BEBSender
 
     public void sendAck( int round, int proposal_number, int src )
     {
-        Logger.log(service.id, "LATSender round=" + round,"Sending ACK: prop_nb=" + proposal_number + " to=" + src);
         Packet p = new Packet(
             PacketTypes.LAT_ACK,
             round,
@@ -73,12 +59,12 @@ public class LATSender extends BEBSender
             service.id,
             src
         );
+        Logger.log(service.id, "LATSender   round=" + round,"Sending ACK: " + p);
         addSendQueue( p );
     }
 
     public void sendNack( int round, int proposal_number, int src, Proposal accepted_value )
     {
-        Logger.log(service.id, "LATSender round=" + round, "Sending NACK: prop_nb=" + proposal_number + " to=" + src + " acc_value=" + accepted_value);
         SetPacket p = new SetPacket(
             PacketTypes.LAT_NACK,
             round,
@@ -86,6 +72,7 @@ public class LATSender extends BEBSender
             service.id,
             src,
             accepted_value );
+        Logger.log(service.id, "LATSender   round=" + round, "Sending NACK: " + p);
         addSendQueue( p );
     }
 }
