@@ -3,30 +3,49 @@ package cs451.utils;
 
 import cs451.network.Timeout;
 
+import java.text.DecimalFormat;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Stopwatch
 {
+    private static final DecimalFormat formatter = new DecimalFormat("###,###,###");
     private static final AtomicBoolean flag = new AtomicBoolean(false);
-    private static long start = 0;
+    private static final Map<Integer, Long> old_mem = new ConcurrentHashMap<>();
+    private static final Map<Integer, Long> start = new ConcurrentHashMap<>();
 
-    public static void init()
+    private static Long getMem()
     {
-        start = System.nanoTime();
-        print();
+        return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
     }
 
-    private static void print()
+    public static void init(int id)
     {
-        long delta = System.nanoTime() - start;
-        long mem = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-        System.out.println( "\n================\n" + mem + " - " + Timeout.toMs(delta) + " ms\n================\n" );
+        start.put( id, System.nanoTime() );
+        old_mem.put( id, getMem() );
+        print(id);
     }
 
-    public static void stop()
+    private static void print(int id)
     {
-        if ( flag.get() ) return;
-        flag.set( true );
-        print();
+        long delta = System.nanoTime() - start.get( id );
+        long mem = getMem();
+        Long old = old_mem.get( id );
+        System.out.println(
+            "\n================\n" +
+            "Id: " + id + "\n" +
+            formatter.format(mem - old) + " B\n" +
+            Timeout.toMs(delta) + " ms\n" +
+            "================\n"
+        );
+        old_mem.put( id, mem );
+    }
+
+    public static void stop(int id)
+    {
+//        if ( flag.get() ) return;
+//        flag.set( true );
+        print(id);
     }
 }

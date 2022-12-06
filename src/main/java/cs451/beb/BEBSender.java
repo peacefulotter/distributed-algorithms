@@ -17,7 +17,7 @@ abstract public class BEBSender extends PLSender
     public BEBSender( SocketService service )
     {
         super( service );
-        Stopwatch.init();
+        Stopwatch.init(service.id);
     }
 
     public void broadcast( Message msg )
@@ -71,13 +71,14 @@ abstract public class BEBSender extends PLSender
                 proposalsToSend.get() > 0
             )
             {
+                proposalsToSend.decrementAndGet();
                 Proposal proposal = service.proposals.poll();
                 // SetMessage msg = new SetMessage( proposal, seq, service.id );
                 SetMessage msg = propose( round, proposal );
                 round++;
                 Logger.log( "BEBSender","normal - Sent packet " + msg );
                 if (service.proposals.isEmpty())
-                    Stopwatch.stop();
+                    Stopwatch.stop(service.id);
             }
             Sleeper.release();
         }
