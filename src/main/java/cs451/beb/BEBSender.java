@@ -5,6 +5,7 @@ import cs451.packet.*;
 import cs451.pl.PLSender;
 import cs451.network.SocketService;
 import cs451.utils.Logger;
+import cs451.utils.Pair;
 import cs451.utils.Sleeper;
 import cs451.utils.Stopwatch;
 
@@ -30,29 +31,23 @@ abstract public class BEBSender extends PLSender
     @Override
     public void addSendQueue( GroupedPacket p )
     {
-        seqMap.put( p.dest, p.seq );
+        seqMap.put( p.src, p.seq );
         super.addSendQueue( p );
     }
 
-    protected void bebBroadcast( List<PacketContent> contents )
+    protected void bebBroadcast( int seq, List<PacketContent> contents )
     {
         Logger.log(service.id, "BEBSender", "Broadcasting msg: " + contents);
-        GroupedPacket p;
         for ( Host dest : service.getHosts() )
-        {
-            int seq = seqMap.getOrDefault( dest.getId(), 0 );
-            p = new GroupedPacket( seq, service.id, contents, dest.getId() );
-            pp2pBroadcast( p );
-        }
+            pp2pSend( seq, contents, dest.getId() );
     }
 
     abstract public void onPropose( List<PacketContent> contents );
 
-    private void sendOne()
+    private void sendOne( int seq )
     {
-        GroupedPacket p = toSend.poll();
-        seqMap.put( p.dest, p.seq );
-        pp2pBroadcast( p );
+        Pair<List<PacketContent>, Integer> p = toSend.poll();
+        pp2pSend( seq, p.getA(), p.getB() );
         Logger.log( "BEBSender","toSend - Sent packet " + p );
     }
 
@@ -67,11 +62,11 @@ abstract public class BEBSender extends PLSender
     @Override
     public void run()
     {
+        int seq = 0;
         while ( !service.closed.get() )
         {
             if ( !toSend.isEmpty() )
-                sendOne();
-
+                sendOne(seq++);
 
             List<PacketContent> contents = new ArrayList<>( MAX );
             if ( !toBroadcast.isEmpty() )
@@ -87,10 +82,7 @@ abstract public class BEBSender extends PLSender
             }
 
             if ( contents.size() > 0 )
-            {
-                Logger.log( "BEBSender","Sent packet " + contents );
-                bebBroadcast( contents );
-            }
+                bebBroadcast( seq++, contents );
 
 //            if (service.proposals.isEmpty())
 //                Stopwatch.stop(service.id);

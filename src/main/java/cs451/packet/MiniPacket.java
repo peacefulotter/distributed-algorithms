@@ -5,13 +5,18 @@ import java.util.Comparator;
 public class MiniPacket implements Comparable<MiniPacket>
 {
     private static final Comparator<MiniPacket> COMPARATOR = getComparator();
-    private final int seq, src, dest;
+    public final int seq, src, dest;
 
     public MiniPacket( int seq, int src, int dest )
     {
         this.seq = seq;
         this.src = src;
         this.dest = dest;
+    }
+
+    public MiniPacket revert()
+    {
+        return new MiniPacket( seq, dest, src );
     }
 
     private static Comparator<MiniPacket> getComparator()

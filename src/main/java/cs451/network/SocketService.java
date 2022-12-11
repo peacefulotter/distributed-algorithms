@@ -2,7 +2,6 @@ package cs451.network;
 
 import cs451.Host;
 import cs451.lat.Proposal;
-import cs451.packet.GroupedPacket;
 import cs451.packet.PacketContent;
 import cs451.packet.PacketParser;
 import cs451.parser.ParserResult;
@@ -57,17 +56,15 @@ public class SocketService
 
     public int getNbHosts() { return hosts.size(); }
 
-    public Host getSelf() { return host; }
-
     public List<Host> getHosts() { return hosts; }
 
-    public GroupedPacket getIncomingPacket()
+    public DatagramPacket getIncomingPacket()
     {
         try
         {
             DatagramPacket dp = new DatagramPacket(buf, buf.length);
             socket.receive( dp );
-            return PacketParser.parse( dp, id );
+            return dp;
         }
         catch ( SocketTimeoutException | PortUnreachableException | ClosedChannelException e ) {
             Logger.log( e.getMessage() );
@@ -82,18 +79,15 @@ public class SocketService
     /**
      * Send a packet to the dest specified by func(dg) or to the connected socket by default
      */
-    public boolean sendPacket( GroupedPacket packet, DatagramFunc func )
+    public boolean sendPacket( DatagramPacket dg, int destId )
     {
-        DatagramPacket datagram = PacketParser.format( packet );
-        func.setDest( datagram );
         try
         {
-            socket.send( datagram );
+            final Host dest = Host.get( destId );
+            dg.setAddress( dest.getAddress() );
+            dg.setPort( dest.getPort() );
+            socket.send( dg );
         }
-        /*catch ( PortUnreachableException e )
-        {
-            return false;
-        }*/
         catch ( IOException e )
         {
             terminate( e );

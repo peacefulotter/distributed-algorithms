@@ -4,20 +4,17 @@ package cs451.packet;
 // TODO: remove packet class
 public enum PacketTypes
 {
-    BRC( 'b', PacketClass.NORMAL ),
-    ACK( 'd', PacketClass.NORMAL ),
-    LAT_PROP('p', PacketClass.SET ),
-    LAT_ACK('a', PacketClass.NORMAL ),
-    LAT_NACK( 'n', PacketClass.SET ),
-    UNKNOWN('u', PacketClass.UNKNOWN );
+    BRC( 'b' ),
+    ACK( 'd' ),
+    LAT_PROP('p' ),
+    LAT_ACK('a' ),
+    LAT_NACK( 'n' );
 
     private final char tag;
-    private final PacketClass packetClass;
 
-    PacketTypes( char tag, PacketClass packetClass )
+    PacketTypes( char tag )
     {
         this.tag = tag;
-        this.packetClass = packetClass;
     }
 
     public static PacketTypes parseType( char tag )
@@ -25,15 +22,10 @@ public enum PacketTypes
         for ( PacketTypes type: values() )
             if ( type.getTag() == tag )
                 return type;
-        return UNKNOWN;
+        return null;
     }
 
     public char getTag() { return tag; }
-
-    public PacketClass getPacketClass()
-    {
-        return packetClass;
-    }
 
     @Override
     public String toString()

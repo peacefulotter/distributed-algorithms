@@ -17,7 +17,7 @@ public class Timeout
     private static final float INCREASE = 1.75f;
     private static final float DECREASE = 0.9f;
     private static final int MIN = 25;
-    private static final int BASE = 50;
+    private static final int BASE = 100;
 
     private static class Handler
     {

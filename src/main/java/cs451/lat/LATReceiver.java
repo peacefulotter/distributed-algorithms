@@ -61,11 +61,12 @@ public class LATReceiver extends BEBReceiver
         // Round not decided yet -> participate to agreement
         else if ( lat != null )
         {
-            if ( c.getType() == PacketTypes.LAT_PROP )
+            PacketTypes t = c.getType();
+            if ( t == PacketTypes.LAT_PROP )
                 return onProposal( lat, c.getProp_nb(), c.getProposal() );
-            else if ( c.getType() == PacketTypes.LAT_NACK )
+            else if ( t == PacketTypes.LAT_NACK )
                 onLatNack( lat, c.getProp_nb(), c.getProposal() );
-            else if ( c.getType() == PacketTypes.LAT_ACK )
+            else if ( t == PacketTypes.LAT_ACK )
                 onLatAck( lat, c.getProp_nb() );
         }
         return null;
@@ -73,10 +74,8 @@ public class LATReceiver extends BEBReceiver
 
     public void onPacket( GroupedPacket p )
     {
-        Logger.log("LATReceiver", p);
+        Logger.log(service.id, "LATReceiver", p);
         int size = p.contents.size();
-        if ( size == 0 )
-            sender.onAcknowledge(p);
 
         // Treat each content in the packet
         List<PacketContent> res = new ArrayList<>(size);
@@ -87,13 +86,10 @@ public class LATReceiver extends BEBReceiver
                 res.add( r );
         }
 
-        Logger.log("LATReceiver", res);
+        Logger.log(service.id, "LATReceiver", res);
 
         // Something to reply -> ack = reply
-        GroupedPacket reply = new GroupedPacket( p.seq + 1, service.id, res, p.src );
-        sender.addSendQueue( reply );
-
-        super.onPacket( p );
+        sender.addSendQueue( res, p.src );
     }
 
     /* upon reception of <ACK, proposal_number>

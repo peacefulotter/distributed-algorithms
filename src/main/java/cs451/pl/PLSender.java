@@ -4,18 +4,19 @@ import cs451.network.SocketHandler;
 import cs451.network.SocketService;
 import cs451.packet.*;
 import cs451.utils.Logger;
+import cs451.utils.Pair;
 
+import java.net.DatagramPacket;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class PLSender extends SocketHandler
 {
     private final Timer timer;
 
     protected final ConcurrentLinkedQueue<PacketContent> toBroadcast;
-    protected final ConcurrentLinkedQueue<GroupedPacket> toSend;
+    protected final ConcurrentLinkedQueue<Pair<List<PacketContent>, Integer>> toSend;
     protected final ConcurrentSkipListSet<MiniPacket> pendingAck;
 
     protected PLReceiver receiver;
@@ -34,9 +35,14 @@ public abstract class PLSender extends SocketHandler
         this.toBroadcast.add( c );
     }
 
+    public void addSendQueue( List<PacketContent> c, int dest )
+    {
+        this.toSend.add( new Pair<>( c, dest ) );
+    }
+
     public void addSendQueue( GroupedPacket p )
     {
-        this.toSend.add( p );
+        addSendQueue( p.contents, p.dest );
     }
 
     public void setReceiver( PLReceiver receiver )
@@ -60,24 +66,25 @@ public abstract class PLSender extends SocketHandler
         timer.schedule( task, service.timeout.get( p.dest ) );
     }
 
-    public void pp2pBroadcast( GroupedPacket p )
+    public void pp2pSend( int seq, List<PacketContent> c, int dest )
     {
-        if ( !sendPacket( p ) )
+        GroupedPacket p = new GroupedPacket( seq, service.id, c, dest );
+        DatagramPacket dp = PacketParser.format( p );
+        if ( !service.sendPacket( dp, dest ) )
             return;
         Logger.log("PLSender", p);
         pendingAck.add( p.minify() );
         addTimeoutTask( p );
     }
 
-    public void onAcknowledge( GroupedPacket p )
+    public void onAcknowledge( MiniPacket p )
     {
-        Logger.log("PLSender", "Ack: " + p);
-        MiniPacket mini = p.minify();
-        if ( !pendingAck.contains( mini ) )
+        MiniPacket mp = p.revert();
+        Logger.log("PLSender", "Ack: " + mp);
+        if ( !pendingAck.remove( mp ) )
             return;
 
-        Logger.log(  "PLSender", "Acknowledged " + p );
-        pendingAck.remove( mini );
-        service.timeout.decrease( p.getSrc() );
+        Logger.log(  "PLSender", "Acknowledged " + mp );
+        service.timeout.decrease( p.src );
     }
 }

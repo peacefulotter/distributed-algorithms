@@ -2,11 +2,13 @@ package cs451.pl;
 
 import cs451.network.SocketHandler;
 import cs451.network.SocketService;
-import cs451.packet.GroupedPacket;
-import cs451.packet.PacketTypes;
+import cs451.packet.*;
 import cs451.utils.Pair;
 import cs451.utils.Sleeper;
+import jdk.jfr.DataAmount;
 
+import java.net.DatagramPacket;
+import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -15,7 +17,7 @@ import static cs451.utils.Logger.log;
 public class PLReceiver extends SocketHandler
 {
     // seq, src
-    protected final Set<Pair<Integer, Integer>> delivered;
+    protected final Set<MiniPacket> delivered;
 
     protected PLSender sender;
 
@@ -33,32 +35,27 @@ public class PLReceiver extends SocketHandler
 
     public boolean deliver( GroupedPacket p )
     {
-        Pair<Integer, Integer> pair = new Pair<>( p.seq, p.src );
-        if ( delivered.contains( pair ) )
-            return false;
-
-        log( "Delivering : " + p );
-        delivered.add( pair );
-        return true;
+        MiniPacket mp = p.minify();
+        return deliver( mp );
     }
 
-    public GroupedPacket getPacket()
+    public boolean deliver( MiniPacket mp )
     {
-        GroupedPacket packet = service.getIncomingPacket();
-        log( "Received : " + packet );
-        return packet;
+        return delivered.add( mp );
     }
 
-    public void onPacket( GroupedPacket p )
+    public void onAck( MiniPacket p )
     {
-//        if (
-//            p.type == PacketTypes.ACK ||
-//            p.type == PacketTypes.LAT_ACK  ||
-//            p.type == PacketTypes.LAT_NACK
-//        )
-//            sender.onAcknowledge( p );
-//        else
-//            handlePacket(p);
+        log( "Received ACK : " + p );
+        sender.onAcknowledge( p );
+    }
+
+    public void onPacket( GroupedPacket p ) {}
+
+    private boolean isAck( DatagramPacket dp )
+    {
+        byte tag = dp.getData()[0];
+        return tag == AckParser.ACK_TAG;
     }
 
     @Override
@@ -66,9 +63,22 @@ public class PLReceiver extends SocketHandler
     {
         while ( !service.closed.get() )
         {
-            GroupedPacket packet = getPacket();
-            if ( packet != null && deliver(packet) )
-                onPacket( packet );
+            DatagramPacket dp = service.getIncomingPacket();
+            if ( isAck( dp ) )
+            {
+                MiniPacket p = AckParser.parse( dp, service.id );
+                if ( deliver(p) )
+                    onAck( p );
+            }
+            else
+            {
+                GroupedPacket p = PacketParser.parse( dp, service.id );
+                DatagramPacket res = AckParser.format( p );
+                service.sendPacket( res, p.src );
+                if ( deliver(p) )
+                    onPacket( p );
+            }
+
             Sleeper.release();
         }
     }

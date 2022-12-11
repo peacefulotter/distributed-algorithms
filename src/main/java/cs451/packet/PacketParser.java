@@ -10,7 +10,8 @@ import java.util.List;
 
 public class PacketParser
 {
-    private static final int BASE_SIZE = 12;
+    private static final byte SET_TAG = (byte) PacketClass.SET.ordinal();
+    private static final int BASE_SIZE = 13;
     private static final int PER_CONTENT_SIZE = 10;
     private static final int INT_SIZE = 4;
 
@@ -31,6 +32,7 @@ public class PacketParser
     {
         int capacity = capacity( p.contents );
         ByteBuffer buffer = ByteBuffer.allocate( capacity );
+        buffer.put( SET_TAG );
         buffer.putInt( p.seq );
         buffer.putInt( p.src );
         buffer.putInt( p.contents.size() );
