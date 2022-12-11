@@ -3,7 +3,6 @@ package PerfectLink;
 import cs451.Host;
 import cs451.lat.Proposal;
 import cs451.packet.PacketTypes;
-import cs451.packet.SetPacket;
 import org.junit.jupiter.api.Test;
 
 public class PacketTest
@@ -21,10 +20,10 @@ public class PacketTest
         {
             prop.add( i );
         }
-        SetPacket a = new SetPacket( t, Integer.MAX_VALUE, 1, 1, 2, prop );
-        System.out.println(a);
-        SetPacket b = (SetPacket) PacketTypes.parseDatagram( a.getDatagram(), dest );
-        System.out.println(b);
+//        SetPacket a = new SetPacket( t, Integer.MAX_VALUE, 1, 1, 2, prop );
+//        System.out.println(a);
+//        SetPacket b = (SetPacket) PacketTypes.parseDatagram( a.getDatagram(), dest );
+//        System.out.println(b);
     }
 
 }

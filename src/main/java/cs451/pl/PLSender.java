@@ -2,9 +2,8 @@ package cs451.pl;
 
 import cs451.network.SocketHandler;
 import cs451.network.SocketService;
-import cs451.packet.SetMessage;
+import cs451.packet.*;
 import cs451.utils.Logger;
-import cs451.packet.Packet;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -15,11 +14,9 @@ public abstract class PLSender extends SocketHandler
 {
     private final Timer timer;
 
-    protected final ConcurrentLinkedQueue<SetMessage> toBroadcast;
-    protected final ConcurrentLinkedQueue<Packet> toSend;
-    protected final ConcurrentSkipListSet<Packet> pendingAck;
-
-    protected final AtomicInteger proposalsToSend;
+    protected final ConcurrentLinkedQueue<PacketContent> toBroadcast;
+    protected final ConcurrentLinkedQueue<GroupedPacket> toSend;
+    protected final ConcurrentSkipListSet<MiniPacket> pendingAck;
 
     protected PLReceiver receiver;
 
@@ -29,16 +26,15 @@ public abstract class PLSender extends SocketHandler
         this.timer = new Timer("Timer");
         this.toBroadcast = new ConcurrentLinkedQueue<>();
         this.toSend = new ConcurrentLinkedQueue<>();
-        this.pendingAck = new ConcurrentSkipListSet<>( Packet.getAckComparator() );
-        this.proposalsToSend = new AtomicInteger( 1 );
+        this.pendingAck = new ConcurrentSkipListSet<>();
     }
 
-    public void addBroadcastQueue( SetMessage msg )
+    public void addBroadcastQueue( PacketContent c )
     {
-        this.toBroadcast.add( msg );
+        this.toBroadcast.add( c );
     }
 
-    public void addSendQueue( Packet p )
+    public void addSendQueue( GroupedPacket p )
     {
         this.toSend.add( p );
     }
@@ -48,40 +44,40 @@ public abstract class PLSender extends SocketHandler
         this.receiver = receiver;
     }
 
-    public void addTimeoutTask( Packet packet )
+    public void addTimeoutTask( GroupedPacket p )
     {
-        int destId = packet.getDestId();
         TimerTask task = new TimerTask() {
             public void run() {
-            if ( !service.closed.get() && pendingAck.contains( packet ) )
+            if ( !service.closed.get() && pendingAck.contains( p.minify() ) )
             {
-                Logger.log(  "Scheduler fired for " + packet );
-                service.timeout.increase( destId );
-                addSendQueue( packet );
+                Logger.log(  "Scheduler fired for " + p );
+                service.timeout.increase( p.dest );
+                addSendQueue( p );
             }
             cancel();
             }
         };
-        timer.schedule( task, service.timeout.get( destId ) );
+        timer.schedule( task, service.timeout.get( p.dest ) );
     }
 
-    public void pp2pBroadcast( Packet packet )
+    public void pp2pBroadcast( GroupedPacket p )
     {
-        if ( !sendPacket( packet ) )
+        if ( !sendPacket( p ) )
             return;
-        System.out.println("pl: " + packet);
-        pendingAck.add( packet );
-        addTimeoutTask( packet );
+        Logger.log("PLSender", p);
+        pendingAck.add( p.minify() );
+        addTimeoutTask( p );
     }
 
-    protected void onAcknowledge( Packet packet )
+    public void onAcknowledge( GroupedPacket p )
     {
-        System.out.println("ack: " + packet);
-        if ( !pendingAck.contains( packet ) )
+        Logger.log("PLSender", "Ack: " + p);
+        MiniPacket mini = p.minify();
+        if ( !pendingAck.contains( mini ) )
             return;
 
-        Logger.log(  "Acknowledged " + packet );
-        pendingAck.remove( packet );
-        service.timeout.decrease( packet.getSrc() );
+        Logger.log(  "PLSender", "Acknowledged " + p );
+        pendingAck.remove( mini );
+        service.timeout.decrease( p.getSrc() );
     }
 }

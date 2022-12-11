@@ -1,7 +1,5 @@
 package cs451.utils;
 
-import cs451.packet.Message;
-
 import java.util.Objects;
 
 public class Pair<A, B>
@@ -17,11 +15,6 @@ public class Pair<A, B>
 
     public A getA() { return a; }
     public B getB() { return b; }
-
-    public static Pair<Integer, Integer> fromMessage( Message m )
-    {
-        return new Pair<>( m.getPropNb(), m.getRound() );
-    }
 
     @Override
     public boolean equals( Object o )

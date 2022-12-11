@@ -1,11 +1,7 @@
 package cs451.packet;
 
 
-import cs451.Host;
-
-import java.net.DatagramPacket;
-import java.nio.ByteBuffer;
-
+// TODO: remove packet class
 public enum PacketTypes
 {
     BRC( 'b', PacketClass.NORMAL ),
@@ -22,17 +18,6 @@ public enum PacketTypes
     {
         this.tag = tag;
         this.packetClass = packetClass;
-    }
-
-    public static Packet parseDatagram( DatagramPacket dp, Host host )
-    {
-        ByteBuffer buffer = Packet.getBuffer( dp );
-        PacketTypes type = parseType( buffer.getChar() );
-        if ( type.packetClass == PacketClass.NORMAL )
-            return Packet.fromDatagram( buffer, type, dp, host );
-        else if ( type.packetClass == PacketClass.SET )
-            return SetPacket.fromDatagram( buffer, type, dp, host );
-        return null;
     }
 
     public static PacketTypes parseType( char tag )

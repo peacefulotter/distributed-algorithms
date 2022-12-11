@@ -2,8 +2,9 @@ package cs451.pl;
 
 import cs451.network.SocketHandler;
 import cs451.network.SocketService;
-import cs451.packet.Packet;
+import cs451.packet.GroupedPacket;
 import cs451.packet.PacketTypes;
+import cs451.utils.Pair;
 import cs451.utils.Sleeper;
 
 import java.util.HashSet;
@@ -13,7 +14,8 @@ import static cs451.utils.Logger.log;
 
 public class PLReceiver extends SocketHandler
 {
-    protected final Set<Integer> delivered;
+    // seq, src
+    protected final Set<Pair<Integer, Integer>> delivered;
 
     protected PLSender sender;
 
@@ -28,46 +30,35 @@ public class PLReceiver extends SocketHandler
         this.sender = sender;
     }
 
-    protected void sendAck( Packet packet )
+
+    public boolean deliver( GroupedPacket p )
     {
-        Packet ack = Packet.createACKPacket( packet );
-        log( "Sending ACK : " + ack );
-        sendPacket( ack );
+        Pair<Integer, Integer> pair = new Pair<>( p.seq, p.src );
+        if ( delivered.contains( pair ) )
+            return false;
+
+        log( "Delivering : " + p );
+        delivered.add( pair );
+        return true;
     }
 
-    public void deliver( Packet packet )
+    public GroupedPacket getPacket()
     {
-        int hc = packet.hashCode();
-        if ( delivered.contains( hc ) )
-            return;
-
-        log( "Delivering : " + packet );
-        delivered.add( hc );
-    }
-
-    public Packet getPacket()
-    {
-        Packet packet = service.getIncomingPacket();
+        GroupedPacket packet = service.getIncomingPacket();
         log( "Received : " + packet );
         return packet;
     }
 
-    private void handlePacket( Packet p )
+    public void onPacket( GroupedPacket p )
     {
-        sendAck( p );
-        deliver( p );
-    }
-
-    public void onPacket( Packet p )
-    {
-        if (
-            p.type == PacketTypes.ACK ||
-            p.type == PacketTypes.LAT_ACK  ||
-            p.type == PacketTypes.LAT_NACK
-        )
-            sender.onAcknowledge( p );
-        else
-            handlePacket(p);
+//        if (
+//            p.type == PacketTypes.ACK ||
+//            p.type == PacketTypes.LAT_ACK  ||
+//            p.type == PacketTypes.LAT_NACK
+//        )
+//            sender.onAcknowledge( p );
+//        else
+//            handlePacket(p);
     }
 
     @Override
@@ -75,8 +66,8 @@ public class PLReceiver extends SocketHandler
     {
         while ( !service.closed.get() )
         {
-            Packet packet = getPacket();
-            if ( packet != null )
+            GroupedPacket packet = getPacket();
+            if ( packet != null && deliver(packet) )
                 onPacket( packet );
             Sleeper.release();
         }

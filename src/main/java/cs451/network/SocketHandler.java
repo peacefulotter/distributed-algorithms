@@ -1,7 +1,8 @@
 package cs451.network;
 
 
-import cs451.packet.Packet;
+import cs451.Host;
+import cs451.packet.GroupedPacket;
 
 public abstract class SocketHandler implements Runnable
 {
@@ -12,11 +13,12 @@ public abstract class SocketHandler implements Runnable
         this.service = service;
     }
 
-    protected boolean sendPacket( Packet packet )
+    protected boolean sendPacket( GroupedPacket packet )
     {
+        final Host dest = Host.get( packet.dest );
         return service.sendPacket( packet, dg -> {
-            dg.setAddress( packet.getDestAddress() );
-            dg.setPort( packet.getDestPort() );
+            dg.setAddress( dest.getAddress() );
+            dg.setPort( dest.getPort() );
         } );
     }
 }

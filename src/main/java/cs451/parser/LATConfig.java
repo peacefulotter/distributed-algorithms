@@ -1,17 +1,20 @@
 package cs451.parser;
 
 import cs451.lat.Proposal;
+import cs451.packet.PacketContent;
+import cs451.packet.PacketTypes;
 
 import java.io.*;
 import java.nio.Buffer;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class LATConfig
 {
     public final int p, vs, ds;
-    public final Queue<Proposal> proposals;
+    public final Queue<PacketContent> contentsQueue;
 
     public LATConfig( String path )
     {
@@ -24,21 +27,23 @@ public class LATConfig
             vs = Integer.parseInt( split[1] );
             ds = Integer.parseInt( split[2] );
 
-            proposals = new ArrayDeque<>(p);
+            contentsQueue = new ArrayDeque<>(p);
+            int round = 0;
 
             while ( (line = r.readLine()) != null)
             {
-                proposals.add( new Proposal(
-                    Arrays.stream( line.split( " " ) )
-                        .map( Integer::parseInt )
-                        .collect( Collectors.toSet() )
-                ) );
+                Proposal prop = new Proposal();
+                String[] props = line.split( " " );
+                for ( String s : props )
+                    prop.add( Integer.parseInt( s ) );
+                PacketContent content = new PacketContent( PacketTypes.LAT_PROP, round++,0, prop );
+                contentsQueue.add( content );
             }
 
             System.out.println(p);
             System.out.println(vs);
             System.out.println(ds);
-            System.out.println(proposals);
+            System.out.println(contentsQueue);
 
         } catch ( IOException e )
         {
@@ -61,8 +66,8 @@ public class LATConfig
         return ds;
     }
 
-    public Queue<Proposal> getProposals()
+    public Queue<PacketContent> getContentsQueue()
     {
-        return proposals;
+        return contentsQueue;
     }
 }

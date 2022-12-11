@@ -58,6 +58,8 @@ public class Host {
         return host;
     }
 
+    public static Host get(int id) { return findById.get( id ); }
+
     public int getId() {
         return id;
     }
