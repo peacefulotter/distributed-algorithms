@@ -23,15 +23,19 @@ public class PacketContent
         this( type, round, prop_nb, new Proposal() );
     }
 
-    @Override
-    public String toString()
+    public String string()
     {
         return "{ " +
             "type=" + type +
             ", round=" + round +
             ", prop_nb=" + prop_nb +
             ", prop=" + prop +
-            " }\n\t";
+            " }";
+    }
+    @Override
+    public String toString()
+    {
+        return "\n\t" + string();
     }
 
     @Override

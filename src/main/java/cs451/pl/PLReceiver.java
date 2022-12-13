@@ -3,6 +3,7 @@ package cs451.pl;
 import cs451.network.SocketHandler;
 import cs451.network.SocketService;
 import cs451.packet.*;
+import cs451.utils.Logger;
 import cs451.utils.Pair;
 import cs451.utils.Sleeper;
 import jdk.jfr.DataAmount;
@@ -11,8 +12,6 @@ import java.net.DatagramPacket;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
-
-import static cs451.utils.Logger.log;
 
 public class PLReceiver extends SocketHandler
 {
@@ -41,13 +40,8 @@ public class PLReceiver extends SocketHandler
 
     public boolean deliver( MiniPacket mp )
     {
+        Logger.log(service.id, "Delivering: " + mp);
         return delivered.add( mp );
-    }
-
-    public void onAck( MiniPacket p )
-    {
-        log( "Received ACK : " + p );
-        sender.onAcknowledge( p );
     }
 
     public void onPacket( GroupedPacket p ) {}
@@ -66,9 +60,10 @@ public class PLReceiver extends SocketHandler
             DatagramPacket dp = service.getIncomingPacket();
             if ( isAck( dp ) )
             {
-                MiniPacket p = AckParser.parse( dp, service.id );
+                MiniPacket p = AckParser.parse( dp ).revert();
+                Logger.log(service.id, "PLReceiver", "Received ACK " + p);
                 if ( deliver(p) )
-                    onAck( p );
+                    sender.onAcknowledge( p );
             }
             else
             {

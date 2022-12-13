@@ -23,7 +23,7 @@ public class Pool
 
     public void start()
     {
-        new Thread( sender ).start();
         new Thread( receiver ).start();
+        new Thread( sender ).start();
     }
 }

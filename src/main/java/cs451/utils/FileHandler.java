@@ -1,25 +1,22 @@
 package cs451.utils;
 
 import cs451.lat.Proposal;
-import cs451.packet.Packet;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Set;
-import java.util.StringJoiner;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.*;
 
 public class FileHandler
 {
     private final String path;
-    private final ConcurrentLinkedQueue<Set<Integer>> messages;
+    private final List<Set<Integer>> messages;
 
     public FileHandler( String path )
     {
         this.path = path;
-        this.messages = new ConcurrentLinkedQueue<>();
+        this.messages = new ArrayList<>();
         onInit();
     }
 
@@ -37,9 +34,21 @@ public class FileHandler
         }
     }
 
-    public void register( Proposal proposal )
+    public void register( int round, Proposal proposal )
     {
-        messages.add( proposal );
+        System.out.println("## Registering " + round + " pro: " + proposal + " size: " + messages.size());
+        int s = messages.size();
+        if ( round == s )
+            messages.add( proposal );
+        else if ( round < s )
+            messages.set( round, proposal );
+        else
+        {
+            for ( int i = 0; i < round - s; i++ )
+                messages.add( null );
+            messages.add( proposal );
+        }
+        System.out.println("## " + messages);
     }
 
     /**
@@ -50,11 +59,12 @@ public class FileHandler
         try ( PrintWriter pw = new PrintWriter( new FileOutputStream( path, true ) ) )
         {
             System.out.println("Writing messages " + messages);
-            messages.forEach( line -> {
+            for ( Set<Integer> line : messages )
+            {
                 StringJoiner sj = new StringJoiner( " " );
                 line.forEach( i -> sj.add( String.valueOf( i ) ) );
                 pw.println( sj );
-            } );
+            }
         } catch ( IOException e )
         {
             e.printStackTrace();

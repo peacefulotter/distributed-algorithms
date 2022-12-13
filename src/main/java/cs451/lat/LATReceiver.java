@@ -42,10 +42,14 @@ public class LATReceiver extends BEBReceiver
         return lat;
     }
 
+
+    // delivered cleanup
+    // nack == N
+
     private PacketContent onPacketContent( PacketContent c )
     {
         int round = c.getRound();
-        Logger.log(service.id, "LATReceiver round=" + round, c);
+        Logger.log(service.id, "LATReceiver round=" + round, c.string());
 
         LATService lat = getLat( round );
         // Round already decided and receiving a LAT_PROP
@@ -86,10 +90,10 @@ public class LATReceiver extends BEBReceiver
                 res.add( r );
         }
 
-        Logger.log(service.id, "LATReceiver", res);
+        Logger.log(service.id, "LATReceiver", "res to SendQueue: " + res);
 
-        // Something to reply -> ack = reply
-        sender.addSendQueue( res, p.src );
+        if ( res.size() > 0 )
+            sender.addResponseQueue( res, p.src );
     }
 
     /* upon reception of <ACK, proposal_number>
@@ -139,6 +143,9 @@ public class LATReceiver extends BEBReceiver
         return getNack( lat.round, proposal_number, lat.accepted_value );
     }
 
+
+    // TODO: for performance tests:
+    // TODO: if receive N proposal -> decide
     private PacketContent onProposal( LATService lat, int proposal_number, Proposal proposed_value )
     {
         boolean isSubset = proposed_value.containsAll( lat.accepted_value );

@@ -1,6 +1,7 @@
 package cs451.packet;
 
 import java.util.Comparator;
+import java.util.Objects;
 
 public class MiniPacket implements Comparable<MiniPacket>
 {
@@ -17,6 +18,21 @@ public class MiniPacket implements Comparable<MiniPacket>
     public MiniPacket revert()
     {
         return new MiniPacket( seq, dest, src );
+    }
+
+    @Override
+    public boolean equals( Object o )
+    {
+        if ( this == o ) return true;
+        if ( o == null || getClass() != o.getClass() ) return false;
+        MiniPacket that = (MiniPacket) o;
+        return seq == that.seq && src == that.src && dest == that.dest;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash( seq, src, dest );
     }
 
     private static Comparator<MiniPacket> getComparator()
@@ -46,5 +62,15 @@ public class MiniPacket implements Comparable<MiniPacket>
     public int getDest()
     {
         return dest;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "MiniPacket{" +
+            "seq=" + seq +
+            ", src=" + src +
+            ", dest=" + dest +
+            '}';
     }
 }

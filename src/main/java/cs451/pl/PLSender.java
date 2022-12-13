@@ -16,7 +16,8 @@ public abstract class PLSender extends SocketHandler
     private final Timer timer;
 
     protected final ConcurrentLinkedQueue<PacketContent> toBroadcast;
-    protected final ConcurrentLinkedQueue<Pair<List<PacketContent>, Integer>> toSend;
+    protected final ConcurrentLinkedQueue<Pair<List<PacketContent>, Integer>> responseSend;
+    protected final ConcurrentLinkedQueue<GroupedPacket> schedulerSend;
     protected final ConcurrentSkipListSet<MiniPacket> pendingAck;
 
     protected PLReceiver receiver;
@@ -26,23 +27,9 @@ public abstract class PLSender extends SocketHandler
         super(service);
         this.timer = new Timer("Timer");
         this.toBroadcast = new ConcurrentLinkedQueue<>();
-        this.toSend = new ConcurrentLinkedQueue<>();
+        this.responseSend = new ConcurrentLinkedQueue<>();
+        this.schedulerSend = new ConcurrentLinkedQueue<>();
         this.pendingAck = new ConcurrentSkipListSet<>();
-    }
-
-    public void addBroadcastQueue( PacketContent c )
-    {
-        this.toBroadcast.add( c );
-    }
-
-    public void addSendQueue( List<PacketContent> c, int dest )
-    {
-        this.toSend.add( new Pair<>( c, dest ) );
-    }
-
-    public void addSendQueue( GroupedPacket p )
-    {
-        addSendQueue( p.contents, p.dest );
     }
 
     public void setReceiver( PLReceiver receiver )
@@ -50,41 +37,62 @@ public abstract class PLSender extends SocketHandler
         this.receiver = receiver;
     }
 
+    public void addBroadcastQueue( PacketContent c )
+    {
+        this.toBroadcast.add( c );
+    }
+
+    public void addResponseQueue( List<PacketContent> c, int dest )
+    {
+        this.responseSend.add( new Pair<>( c, dest ) );
+    }
+
+    public void addSchedulerQueue( GroupedPacket p )
+    {
+        this.schedulerSend.add( p );
+    }
+
     public void addTimeoutTask( GroupedPacket p )
     {
         TimerTask task = new TimerTask() {
             public void run() {
-            if ( !service.closed.get() && pendingAck.contains( p.minify() ) )
-            {
-                Logger.log(  "Scheduler fired for " + p );
-                service.timeout.increase( p.dest );
-                addSendQueue( p );
-            }
-            cancel();
+                if ( !service.closed.get() && pendingAck.contains( p.minify() ) )
+                {
+                    Logger.log(  service.id, "Scheduler fired for " + p );
+                    service.timeout.increase( p.dest );
+                    addSchedulerQueue( p );
+                }
+                cancel();
             }
         };
         timer.schedule( task, service.timeout.get( p.dest ) );
     }
 
-    public void pp2pSend( int seq, List<PacketContent> c, int dest )
+    public void pp2pSend( GroupedPacket p )
     {
-        GroupedPacket p = new GroupedPacket( seq, service.id, c, dest );
         DatagramPacket dp = PacketParser.format( p );
-        if ( !service.sendPacket( dp, dest ) )
+        if ( !service.sendPacket( dp, p.dest ) )
             return;
-        Logger.log("PLSender", p);
+        Logger.log("PLSender", p.minify());
         pendingAck.add( p.minify() );
         addTimeoutTask( p );
     }
 
-    public void onAcknowledge( MiniPacket p )
+    public void pp2pSend( int seq, List<PacketContent> c, int dest )
     {
-        MiniPacket mp = p.revert();
-        Logger.log("PLSender", "Ack: " + mp);
+        GroupedPacket p = new GroupedPacket( seq, service.id, c, dest );
+        pp2pSend( p );
+    }
+
+    // mp: Already reverted packet
+    public void onAcknowledge( MiniPacket mp )
+    {
+        Logger.log(service.id, "PLSender", "Ack: " + mp);
         if ( !pendingAck.remove( mp ) )
             return;
 
-        Logger.log(  "PLSender", "Acknowledged " + mp );
-        service.timeout.decrease( p.src );
+        Logger.log(  service.id,"PLSender", "Acknowledged " + mp );
+        int dest = mp.src; // because reverted
+        service.timeout.decrease( dest );
     }
 }

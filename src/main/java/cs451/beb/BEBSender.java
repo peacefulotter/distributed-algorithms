@@ -10,7 +10,6 @@ import cs451.utils.Sleeper;
 import cs451.utils.Stopwatch;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 abstract public class BEBSender extends PLSender
@@ -18,21 +17,12 @@ abstract public class BEBSender extends PLSender
     public static final int MAX = 8;
 
     protected final AtomicInteger proposalsToSend;
-    private final Map<Integer, Integer> seqMap;
 
     public BEBSender( SocketService service )
     {
         super( service );
-        this.seqMap = new ConcurrentHashMap<>();
         this.proposalsToSend = new AtomicInteger( MAX );
         Stopwatch.init(service.id);
-    }
-
-    @Override
-    public void addSendQueue( GroupedPacket p )
-    {
-        seqMap.put( p.src, p.seq );
-        super.addSendQueue( p );
     }
 
     protected void bebBroadcast( int seq, List<PacketContent> contents )
@@ -44,11 +34,21 @@ abstract public class BEBSender extends PLSender
 
     abstract public void onPropose( List<PacketContent> contents );
 
-    private void sendOne( int seq )
+    private int sendOne( int seq )
     {
-        Pair<List<PacketContent>, Integer> p = toSend.poll();
+        Pair<List<PacketContent>, Integer> p = responseSend.poll();
+        if ( p == null ) return seq;
+        Logger.log( service.id,"BEBSender","responseSend - Sent packet " + p );
         pp2pSend( seq, p.getA(), p.getB() );
-        Logger.log( "BEBSender","toSend - Sent packet " + p );
+        return seq + 1;
+    }
+
+    private void sendScheduler()
+    {
+        GroupedPacket p = schedulerSend.poll();
+        if ( p == null ) return;
+        Logger.log( service.id, "BEBSender", "SchedulerQueue - Sending " + p.minify() );
+        pp2pSend( p );
     }
 
     private int formContents( List<PacketContent> contents, Queue<PacketContent> q, int max )
@@ -65,8 +65,8 @@ abstract public class BEBSender extends PLSender
         int seq = 0;
         while ( !service.closed.get() )
         {
-            if ( !toSend.isEmpty() )
-                sendOne(seq++);
+            seq = sendOne(seq);
+            sendScheduler();
 
             List<PacketContent> contents = new ArrayList<>( MAX );
             if ( !toBroadcast.isEmpty() )

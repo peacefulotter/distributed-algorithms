@@ -53,6 +53,7 @@ public class PacketParser
     public static GroupedPacket parse( DatagramPacket dp, int dest )
     {
         ByteBuffer bb = ByteBuffer.wrap( dp.getData() );
+        bb.get(); // remove first byte = tag
         int seq = bb.getInt();
         int src = bb.getInt();
         int nb = bb.getInt();

@@ -96,9 +96,9 @@ public class SocketService
         return true;
     }
 
-    public void registerProposal( Proposal proposal )
+    public void registerProposal( int round, Proposal proposal )
     {
-        this.handler.register( proposal );
+        this.handler.register( round, proposal );
     }
 
     public void terminate( Exception e )
