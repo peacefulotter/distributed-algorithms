@@ -53,9 +53,11 @@ public class Timeout
     }
 
     private final ConcurrentMap<Integer, Handler> handlers = new ConcurrentHashMap<>();
+    private final int id;
 
-    public Timeout( List<Host> hosts )
+    public Timeout( int id, List<Host> hosts )
     {
+        this.id = id;
         for ( Host h : hosts )
             handlers.put( h.getId(), new Handler() );
     }
@@ -65,7 +67,7 @@ public class Timeout
         Handler h = handlers.get( id );
         int before = h.timeout.get();
         if ( h.increase() )
-            Logger.log( PREFIX, "(" + id + ") Increasing " + before + " -> " + h.timeout.get() );
+            Logger.log( id, PREFIX, "(" + id + ") Increasing " + before + " -> " + h.timeout.get() );
     }
 
     public void decrease( int id )
@@ -73,7 +75,7 @@ public class Timeout
         Handler h = handlers.get( id );
         int before = h.timeout.get();
         if ( h.decrease() )
-            Logger.log( PREFIX, "(" + id + ") Decreasing " + before + " -> " + h.timeout.get() );
+            Logger.log( id, PREFIX, "(" + id + ") Decreasing " + before + " -> " + h.timeout.get() );
     }
 
     public int get( int id )

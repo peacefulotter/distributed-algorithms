@@ -15,11 +15,6 @@ public class MiniPacket implements Comparable<MiniPacket>
         this.dest = dest;
     }
 
-    public MiniPacket revert()
-    {
-        return new MiniPacket( seq, dest, src );
-    }
-
     @Override
     public boolean equals( Object o )
     {
@@ -62,6 +57,11 @@ public class MiniPacket implements Comparable<MiniPacket>
     public int getDest()
     {
         return dest;
+    }
+
+    public String ackString()
+    {
+        return "DST=" + dest + ", SEQ=" + seq + ", SRC=" + src;
     }
 
     @Override

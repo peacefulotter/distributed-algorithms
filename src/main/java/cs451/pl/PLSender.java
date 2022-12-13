@@ -73,7 +73,7 @@ public abstract class PLSender extends SocketHandler
         DatagramPacket dp = PacketParser.format( p );
         if ( !service.sendPacket( dp, p.dest ) )
             return;
-        Logger.log("PLSender", p.minify());
+        Logger.log(service.id, "PLSender", p.minify());
         pendingAck.add( p.minify() );
         addTimeoutTask( p );
     }
@@ -84,15 +84,14 @@ public abstract class PLSender extends SocketHandler
         pp2pSend( p );
     }
 
-    // mp: Already reverted packet
     public void onAcknowledge( MiniPacket mp )
     {
-        Logger.log(service.id, "PLSender", "Ack: " + mp);
+        Logger.log(service.id, "PLSender", "Ack: " + mp.ackString() );
+        Logger.log( service.id, "",";;; " + pendingAck);
         if ( !pendingAck.remove( mp ) )
             return;
 
-        Logger.log(  service.id,"PLSender", "Acknowledged " + mp );
-        int dest = mp.src; // because reverted
-        service.timeout.decrease( dest );
+        Logger.log(  service.id,"PLSender", "Acknowledged " + mp.ackString() );
+        service.timeout.decrease( mp.dest );
     }
 }

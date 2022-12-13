@@ -5,24 +5,36 @@ import cs451.network.SocketService;
 import cs451.packet.GroupedPacket;
 import cs451.packet.PacketContent;
 import cs451.packet.PacketTypes;
+import cs451.pl.PLSender;
 import cs451.utils.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 public class LATReceiver extends BEBReceiver
 {
     // round -> decision
     private final Map<Integer, Proposal> decided;
-    // round -> service
-    private final ConcurrentMap<Integer, LATService> latServices;
+    // round -> service (concurrency verified)
+    private final ConcurrentHashMap<Integer, LATService> latServices;
+    // round -> nb of proposals
+    private final Map<Integer, Integer> receivedProposals;
+
+    private LATSender sender;
 
     public LATReceiver( SocketService service )
     {
         super( service );
         this.decided = new HashMap<>();
         this.latServices = new ConcurrentHashMap<>();
+        this.receivedProposals = new HashMap<>();
+    }
+
+    @Override
+    public void setSender( PLSender sender )
+    {
+        super.setSender( sender );
+        this.sender = (LATSender) sender;
     }
 
     public void setDecided( int round, Proposal decision )
@@ -104,7 +116,7 @@ public class LATReceiver extends BEBReceiver
         if ( proposal_number != lat.active_proposal_number.get() )
             return;
 
-        lat.onAck((LATSender) sender, this );
+        lat.onAck( sender, this );
     }
 
     /* upon reception of <NACK, proposal_number, value>
@@ -115,7 +127,7 @@ public class LATReceiver extends BEBReceiver
         if ( proposal_number != lat.active_proposal_number.get() )
             return;
 
-        lat.onNack((LATSender) sender, value );
+        lat.onNack( sender, value );
     }
 
     private PacketContent getAck( int round, int proposal_number )
@@ -143,13 +155,30 @@ public class LATReceiver extends BEBReceiver
         return getNack( lat.round, proposal_number, lat.accepted_value );
     }
 
+    private boolean checkReceiveProposals(int round)
+    {
+        int nb = receivedProposals.getOrDefault(round, 0);
+        receivedProposals.put( round, nb + 1 );
+        return (nb + 1) >= service.getNbHosts();
+    }
 
-    // TODO: for performance tests:
-    // TODO: if receive N proposal -> decide
+
     private PacketContent onProposal( LATService lat, int proposal_number, Proposal proposed_value )
     {
+        // Receive N proposals -> decide early
+        // TODO: remove comments
+//        int r = lat.round;
+//        if ( checkReceiveProposals(r) )
+//        {
+        /* might want to broadcast after decision*/
+//            Logger.log(service.id, "LATReceiver round=" + r, "Deciding early..");
+//            lat.decide(sender, this);
+//            return onDecidedProposal( r, decided.get( r ), proposal_number, proposed_value );
+//        }
+
+        // Normal onProposal
         boolean isSubset = proposed_value.containsAll( lat.accepted_value );
-        Logger.log(service.id, "LATReceiver round=" + lat.round, "onProposal: number=" + proposal_number + ", prop_value=" + proposed_value + ", acc_value=" + lat.accepted_value + ", subset?=" + isSubset);
+        Logger.log(service.id, "LATReceiver round=" + lat.round, "onProposal: prop_nb=" + proposal_number + ", prop_value=" + proposed_value + ", acc_value=" + lat.accepted_value + ", subset?=" + isSubset);
         if ( isSubset )
             return onAckProposal( lat, proposal_number, proposed_value );
         else

@@ -84,6 +84,8 @@ abstract public class BEBSender extends PLSender
             if ( contents.size() > 0 )
                 bebBroadcast( seq++, contents );
 
+            contents.clear();
+
 //            if (service.proposals.isEmpty())
 //                Stopwatch.stop(service.id);
 

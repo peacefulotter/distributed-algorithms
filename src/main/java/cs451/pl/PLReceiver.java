@@ -40,7 +40,8 @@ public class PLReceiver extends SocketHandler
 
     public boolean deliver( MiniPacket mp )
     {
-        Logger.log(service.id, "Delivering: " + mp);
+        Logger.log(service.id, "Delivering: " + mp.ackString());
+        Logger.log( service.id, "","@@@ " + delivered);
         return delivered.add( mp );
     }
 
@@ -60,10 +61,9 @@ public class PLReceiver extends SocketHandler
             DatagramPacket dp = service.getIncomingPacket();
             if ( isAck( dp ) )
             {
-                MiniPacket p = AckParser.parse( dp ).revert();
-                Logger.log(service.id, "PLReceiver", "Received ACK " + p);
-                if ( deliver(p) )
-                    sender.onAcknowledge( p );
+                MiniPacket p = AckParser.parse( dp );
+                Logger.log(service.id, "PLReceiver", "Received ACK " + p.ackString());
+                sender.onAcknowledge( p );
             }
             else
             {

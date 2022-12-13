@@ -49,7 +49,7 @@ public class SocketService
         }
 
         this.handler = new FileHandler( result.output );
-        this.timeout = new Timeout( hosts );
+        this.timeout = new Timeout( id, hosts );
         this.closed = new AtomicBoolean(false);
         Logger.log( id,"Socket connected" );
     }

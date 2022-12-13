@@ -53,12 +53,8 @@ public class LATService
         sender.sendProposal( this );
     }
 
-    // upon ack_count >= f+1
-    public void checkDecide( LATSender sender, LATReceiver receiver, int acks )
+    public void decide(LATSender sender, LATReceiver receiver)
     {
-        if ( notMajority( acks ) )
-            return;
-
         Logger.log(service.id, "LATService  round=" + round, "///// DECIDING apn=" + active_proposal_number.get() + " ////// " + proposed_value );
 
         // register decision
@@ -69,6 +65,15 @@ public class LATService
         sender.moveNextProposal();
     }
 
+    // upon ack_count >= f+1
+    public void checkDecide( LATSender sender, LATReceiver receiver, int acks )
+    {
+        if ( notMajority( acks ) )
+            return;
+
+        decide(sender, receiver);
+    }
+
     public void onAck( LATSender sender, LATReceiver receiver )
     {
         int acks = ack_count.incrementAndGet();
@@ -77,8 +82,6 @@ public class LATService
         checkDecide( sender, receiver, acks );
     }
 
-    // TODO: can decide if nack = n
-    // n = ??
     public void onNack( LATSender sender, Proposal value )
     {
         proposed_value.addAll( value );
@@ -91,14 +94,6 @@ public class LATService
     {
         ack_count.reset();
         nack_count.reset();
-    }
-
-    // TODO: delete?
-    private void resetLatService()
-    {
-        resetAcks();
-        proposed_value.clear();
-        accepted_value.clear();
     }
 
     @Override
