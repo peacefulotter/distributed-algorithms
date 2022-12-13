@@ -61,11 +61,11 @@ class PerfectLinkTest
     {
         SocketService s1 = getService( 1 );
         SocketService s2 = getService( 2 );
-        // SocketService s3 = getService( 3 );
+        SocketService s3 = getService( 3 );
 
         serverTest( s1, Logger.Color.BLUE );
         serverTest( s2, Logger.Color.RED );
-        // serverTest( s3, Logger.Color.GREEN );
+        serverTest( s3, Logger.Color.GREEN );
 
         hold(60 * 60 * 1000);
     }
