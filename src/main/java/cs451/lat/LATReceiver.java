@@ -170,10 +170,12 @@ public class LATReceiver extends BEBReceiver
 //        int r = lat.round;
 //        if ( checkReceiveProposals(r) )
 //        {
-        /* might want to broadcast after decision*/
 //            Logger.log(service.id, "LATReceiver round=" + r, "Deciding early..");
 //            lat.decide(sender, this);
-//            return onDecidedProposal( r, decided.get( r ), proposal_number, proposed_value );
+//            Proposal prop = decided.get( r );
+//            PacketContent content = new PacketContent( PacketTypes.LAT_PROP, r, proposal_number, prop );
+//            sender.addBroadcastQueue( content );
+//            return onDecidedProposal( r, prop, proposal_number, proposed_value );
 //        }
 
         // Normal onProposal

@@ -21,7 +21,7 @@ public class LATService
     }
 
     public final Ack ack_count = new Ack();
-    public final Ack nack_count = new Ack(); // TODO: to AtomicBoolean
+    public final Ack nack_count = new Ack();
     public final AtomicInteger active_proposal_number = new AtomicInteger( 0 );
 
     public volatile Proposal proposed_value = new Proposal();

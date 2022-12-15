@@ -1,7 +1,6 @@
 package cs451.packet;
 
 
-// TODO: remove packet class
 public enum PacketTypes
 {
     BRC( 'b' ),

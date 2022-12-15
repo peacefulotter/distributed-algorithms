@@ -31,7 +31,6 @@ public class LATSender extends BEBSender
         lat.resetAcks();
         PacketContent content = new PacketContent( PacketTypes.LAT_PROP, lat.round, apn, lat.proposed_value );
         Logger.log(service.id, "LATSender   round=" + lat.round, "Sending new proposal: " + content);
-        // TODO: don't broadcast to those who acked
         addBroadcastQueue( content );
     }
 
