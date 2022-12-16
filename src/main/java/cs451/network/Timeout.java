@@ -35,7 +35,8 @@ public class Timeout
         {
             long current = System.nanoTime();
             boolean prevent = toMs( current - last.get() ) < (timeout.get() / DELTA_RATIO);
-            last.set( System.nanoTime() );
+            if (!prevent)
+                last.set( System.nanoTime() );
             return prevent;
         }
 

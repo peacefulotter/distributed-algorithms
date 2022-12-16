@@ -67,9 +67,9 @@ class PerfectLinkTest
         SocketService s5 = getService( mode, 5 );
 
         serverTest( s1, Logger.Color.BLUE );
-        serverTest( s2, Logger.Color.RED );
+        // serverTest( s2, Logger.Color.RED );
         serverTest( s3, Logger.Color.GREEN );
-        serverTest( s4, Logger.Color.BLUE );
+        // serverTest( s4, Logger.Color.BLUE );
         serverTest( s5, Logger.Color.RED );
 
         hold(60 * 60 * 1000);

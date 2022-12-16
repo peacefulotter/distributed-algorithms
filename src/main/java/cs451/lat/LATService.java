@@ -46,7 +46,7 @@ public class LATService
     public void checkProposalFinished( LATSender sender, int acks, int nacks )
     {
         Logger.log(service.id, "LATService  round=" + round,"Check proposal " + this);
-        if ( nacks <= 0 || notMajority( acks + nacks ) )
+        if ( nacks <= 0 ) // || notMajority( acks + nacks )
             return;
 
         ack_count.reset();
