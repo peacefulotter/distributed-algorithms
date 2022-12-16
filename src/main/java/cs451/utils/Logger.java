@@ -95,10 +95,15 @@ public class Logger
         log( 0, "[" + prefix + "] " + o );
     }
 
+    private static String formatPrefix( int id, String prefix )
+    {
+        return "[" + id + " " + prefix + "]";
+    }
+
     public static void log( int id, String prefix, Object o )
     {
         Color color = colorMap.get( id );
-        log( color, "[" + id + " " + prefix + "]",  o );
+        log( color, formatPrefix( id, prefix ),  o );
     }
 
     public static void log( Logger.Color color, String prefix, Object o)
@@ -107,5 +112,13 @@ public class Logger
         String c1 = color == null ? "" : color.c1;
         String c2 = color == null ? "" : color.c2;
         System.out.println(c1 + time() + " " + prefix + " " + c2 + " " + o);
+    }
+
+    public static void print( int id, String prefix, Object o )
+    {
+        Color color = colorMap.get( id );
+        String c1 = color == null ? "" : color.c1;
+        String c2 = color == null ? "" : color.c2;
+        System.out.println(c1 + time() + " " + formatPrefix( id, prefix ) + " " + c2 + " " + o);
     }
 }

@@ -1,6 +1,7 @@
 package cs451.lat;
 
 import cs451.network.SocketService;
+import cs451.packet.PacketContent;
 import cs451.utils.Logger;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,55 +24,57 @@ public class LATService
     public final Ack ack_count = new Ack();
     public final Ack nack_count = new Ack();
     public final AtomicInteger active_proposal_number = new AtomicInteger( 0 );
+    private final SocketService service;
+    private final int majority;
 
     public volatile Proposal proposed_value = new Proposal();
-    public Proposal accepted_value = new Proposal();
-
-    private final SocketService service;
-    private final int f;
     public final int round;
 
     public LATService( SocketService service, int round )
     {
         this.service = service;
-        this.f = (int) Math.floor( service.getNbHosts() / 2f );
+        this.majority = (int) Math.floor( service.getNbHosts() / 2f ) + 1;
         this.round = round;
     }
 
     private boolean notMajority( int acks )
     {
-        return !( acks >= f + 1 );
+        return acks < majority;
     }
 
-    // upon nack_count > 0 and ack_count + nack_count >= f+1
+    // upon nack_count > 0 and ack_count + nack_count >= majority
     public void checkProposalFinished( LATSender sender, int acks, int nacks )
     {
         Logger.log(service.id, "LATService  round=" + round,"Check proposal " + this);
         if ( nacks <= 0 || notMajority( acks + nacks ) )
             return;
 
-        sender.sendProposal( this );
+        ack_count.reset();
+        nack_count.reset();
+        int apn = active_proposal_number.incrementAndGet();
+        sender.sendProposal( this, apn );
     }
 
-    public void decide(LATSender sender, LATReceiver receiver)
+
+    public void decide(LATSender sender, LATReceiver receiver, Proposal decision )
     {
-        Logger.log(service.id, "LATService  round=" + round, "///// DECIDING apn=" + active_proposal_number.get() + " ////// " + proposed_value );
+        Logger.print(service.id, "LATService  round=" + round, "///// DECIDING apn=" + active_proposal_number.get() + " ////// " + decision );
 
         // register decision
-        service.registerProposal( round, proposed_value );
+        service.registerProposal( round, decision );
         // add decided lat to receiver
-        receiver.setDecided( round, proposed_value );
+        receiver.setDecided( round, decision );
         // move to next round -> propose new proposal
         sender.moveNextProposal();
     }
 
-    // upon ack_count >= f+1
+    // upon ack_count >= majority+1
     public void checkDecide( LATSender sender, LATReceiver receiver, int acks )
     {
         if ( notMajority( acks ) )
             return;
 
-        decide(sender, receiver);
+        decide(sender, receiver, proposed_value);
     }
 
     public void onAck( LATSender sender, LATReceiver receiver )
@@ -90,17 +93,11 @@ public class LATService
         checkProposalFinished( sender, acks, nacks );
     }
 
-    public void resetAcks()
-    {
-        ack_count.reset();
-        nack_count.reset();
-    }
-
     @Override
     public String toString()
     {
         return "{" +
-            "f=" + f +
+            "majority=" + majority +
             ", round=" + round +
             ", ack_count=" + ack_count +
             ", nack_count=" + nack_count +

@@ -59,18 +59,9 @@ public class MiniPacket implements Comparable<MiniPacket>
         return dest;
     }
 
-    public String ackString()
-    {
-        return "DST=" + dest + ", SEQ=" + seq + ", SRC=" + src;
-    }
-
     @Override
     public String toString()
     {
-        return "MiniPacket{" +
-            "seq=" + seq +
-            ", src=" + src +
-            ", dest=" + dest +
-            '}';
+        return "DST=" + dest + ", SEQ=" + seq + ", SRC=" + src;
     }
 }

@@ -13,11 +13,6 @@ public class GroupedPacket extends GroupedMessage
         this.dest = dest;
     }
 
-    public GroupedPacket( int seq, int src, PacketContent prop, int dest )
-    {
-        this( seq, src, List.of( prop ), dest );
-    }
-
     public MiniPacket minify()
     {
         return new MiniPacket( seq, src, dest );

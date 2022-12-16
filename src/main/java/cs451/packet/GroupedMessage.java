@@ -9,11 +9,6 @@ public class GroupedMessage
 
     public int seq;
 
-    public GroupedMessage( int seq, int src, PacketContent content )
-    {
-        this(seq, src, List.of(content) );
-    }
-
     public GroupedMessage( int seq, int src, List<PacketContent> contents )
     {
         this.seq = seq;

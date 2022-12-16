@@ -3,8 +3,6 @@ package cs451.packet;
 
 public enum PacketTypes
 {
-    BRC( 'b' ),
-    ACK( 'd' ),
     LAT_PROP('p' ),
     LAT_ACK('a' ),
     LAT_NACK( 'n' );

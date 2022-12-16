@@ -39,7 +39,7 @@ public class Main {
         List<Host> hosts = hostsParser.getHosts();
         LATConfig config = new LATConfig( parser.config() );
 
-        printDetails( parser );
+        // printDetails( parser );
 
         int id = parser.myId();
         String output = parser.output();

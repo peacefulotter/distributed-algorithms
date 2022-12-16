@@ -56,13 +56,13 @@ public abstract class PLSender extends SocketHandler
     {
         TimerTask task = new TimerTask() {
             public void run() {
-                if ( !service.closed.get() && pendingAck.contains( p.minify() ) )
-                {
-                    Logger.log(  service.id, "Scheduler fired for " + p );
-                    service.timeout.increase( p.dest );
-                    addSchedulerQueue( p );
-                }
-                cancel();
+            if ( !service.closed.get() && pendingAck.contains( p.minify() ) )
+            {
+                Logger.log(  service.id, "Scheduler fired for " + p );
+                service.timeout.increase( p.dest );
+                addSchedulerQueue( p );
+            }
+            cancel();
             }
         };
         timer.schedule( task, service.timeout.get( p.dest ) );
@@ -86,12 +86,11 @@ public abstract class PLSender extends SocketHandler
 
     public void onAcknowledge( MiniPacket mp )
     {
-        Logger.log(service.id, "PLSender", "Ack: " + mp.ackString() );
-        Logger.log( service.id, "",";;; " + pendingAck);
+        Logger.log(service.id, "PLSender", "Ack: " + mp );
         if ( !pendingAck.remove( mp ) )
             return;
 
-        Logger.log(  service.id,"PLSender", "Acknowledged " + mp.ackString() );
+        Logger.print(service.id,"PLSender", "Acknowledged " + mp );
         service.timeout.decrease( mp.dest );
     }
 }

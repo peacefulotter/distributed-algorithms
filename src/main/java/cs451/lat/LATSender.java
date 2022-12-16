@@ -20,17 +20,17 @@ public class LATSender extends BEBSender
     {
         for ( PacketContent c : contents )
         {
-            LATService lat = ((LATReceiver) receiver).getLat( c.getRound() );
+            LATService lat = new LATService( service, c.getRound() );
             lat.proposed_value = c.getProposal();
+            ((LATReceiver) receiver).addLat( lat );
         }
     }
 
-    public void sendProposal( LATService lat )
+    public void sendProposal( LATService lat, int apn )
     {
-        int apn = lat.active_proposal_number.incrementAndGet();
-        lat.resetAcks();
-        PacketContent content = new PacketContent( PacketTypes.LAT_PROP, lat.round, apn, lat.proposed_value );
-        Logger.log(service.id, "LATSender   round=" + lat.round, "Sending new proposal: " + content);
+        Proposal prop = new Proposal(lat.proposed_value);
+        PacketContent content = new PacketContent( PacketTypes.LAT_PROP, lat.round, apn, prop );
+        Logger.log(service.id, "LATSender   round=" + lat.round, "Sending new proposal: " + content.string());
         addBroadcastQueue( content );
     }
 

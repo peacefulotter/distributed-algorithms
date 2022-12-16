@@ -39,12 +39,6 @@ public class LATConfig
                 PacketContent content = new PacketContent( PacketTypes.LAT_PROP, round++,0, prop );
                 contentsQueue.add( content );
             }
-
-            System.out.println(p);
-            System.out.println(vs);
-            System.out.println(ds);
-            System.out.println(contentsQueue);
-
         } catch ( IOException e )
         {
             throw new RuntimeException( e );

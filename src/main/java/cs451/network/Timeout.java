@@ -15,7 +15,9 @@ public class Timeout
 
     private static final float DELTA_RATIO = 3; // 1/3 change
     private static final float INCREASE = 1.75f;
+    private static final float SLOW_INCREASE = 1.2f;
     private static final float DECREASE = 0.9f;
+    private static final int MAX_TO = 2000; // 2s
     private static final int MIN = 25;
     private static final int BASE = 100;
 
@@ -40,7 +42,9 @@ public class Timeout
         public boolean increase()
         {
             if ( preventChange( lastIncrease ) ) return false;
-            timeout.set( (int) (timeout.get() * INCREASE) );
+            int to = timeout.get();
+            float factor = (to < MAX_TO) ? INCREASE : SLOW_INCREASE;
+            timeout.set( (int) (to * factor) );
             return true;
         }
 
@@ -53,11 +57,11 @@ public class Timeout
     }
 
     private final ConcurrentMap<Integer, Handler> handlers = new ConcurrentHashMap<>();
-    private final int id;
+    private final int service_id;
 
     public Timeout( int id, List<Host> hosts )
     {
-        this.id = id;
+        this.service_id = id;
         for ( Host h : hosts )
             handlers.put( h.getId(), new Handler() );
     }
@@ -67,7 +71,7 @@ public class Timeout
         Handler h = handlers.get( id );
         int before = h.timeout.get();
         if ( h.increase() )
-            Logger.log( id, PREFIX, "(" + id + ") Increasing " + before + " -> " + h.timeout.get() );
+            Logger.print( service_id, PREFIX, "(" + id + ") Increasing " + before + " -> " + h.timeout.get() );
     }
 
     public void decrease( int id )
@@ -75,7 +79,7 @@ public class Timeout
         Handler h = handlers.get( id );
         int before = h.timeout.get();
         if ( h.decrease() )
-            Logger.log( id, PREFIX, "(" + id + ") Decreasing " + before + " -> " + h.timeout.get() );
+            Logger.print( service_id, PREFIX, "(" + id + ") Decreasing " + before + " -> " + h.timeout.get() );
     }
 
     public int get( int id )

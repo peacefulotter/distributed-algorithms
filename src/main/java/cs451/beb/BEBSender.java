@@ -7,7 +7,6 @@ import cs451.network.SocketService;
 import cs451.utils.Logger;
 import cs451.utils.Pair;
 import cs451.utils.Sleeper;
-import cs451.utils.Stopwatch;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,7 +21,6 @@ abstract public class BEBSender extends PLSender
     {
         super( service );
         this.proposalsToSend = new AtomicInteger( MAX );
-        Stopwatch.init(service.id);
     }
 
     protected void bebBroadcast( int seq, List<PacketContent> contents )
@@ -82,7 +80,10 @@ abstract public class BEBSender extends PLSender
             }
 
             if ( contents.size() > 0 )
-                bebBroadcast( seq++, contents );
+            {
+                bebBroadcast( seq, contents );
+                seq++;
+            }
 
             contents.clear();
 

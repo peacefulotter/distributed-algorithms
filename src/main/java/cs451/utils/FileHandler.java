@@ -36,7 +36,7 @@ public class FileHandler
 
     public void register( int round, Proposal proposal )
     {
-        System.out.println("## Registering " + round + " pro: " + proposal + " size: " + messages.size());
+        Logger.log("[FileHandler] Registering " + round + " pro: " + proposal + " size: " + messages.size());
         int s = messages.size();
         if ( round == s )
             messages.add( proposal );
@@ -48,7 +48,6 @@ public class FileHandler
                 messages.add( null );
             messages.add( proposal );
         }
-        System.out.println("## " + messages);
     }
 
     /**
