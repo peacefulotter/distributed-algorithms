@@ -1,5 +1,6 @@
 package cs451.packet;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -11,6 +12,11 @@ public class GroupedPacket extends GroupedMessage
     {
         super( seq, src, contents );
         this.dest = dest;
+    }
+
+    public GroupedPacket( GroupedPacket p )
+    {
+        this(p.seq, p.src, new ArrayList<>(p.contents), p.dest );
     }
 
     public MiniPacket minify()

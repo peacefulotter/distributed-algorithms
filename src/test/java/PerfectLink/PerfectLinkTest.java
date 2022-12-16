@@ -28,14 +28,14 @@ class PerfectLinkTest
         } ).start();
     }
 
-    protected static String[] getArgs( int id )
+    protected static String[] getArgs( String mode, int id )
     {
         return new String[] {
             "--id", id + "",
             "--hosts", "../example/hosts",
             "--output", "../example/output/" + id + ".output",
             // "../example/configs/lattice-agreement-" + id + ".config"
-            "../example/configs/custom-" + id + ".config"
+            "../example/configs/" + mode + "/custom-" + id + ".config"
         };
     }
 
@@ -50,26 +50,27 @@ class PerfectLinkTest
         }
     }
 
-    protected SocketService getService( int id )
+    protected SocketService getService( String mode, int id )
     {
-        ParserResult result = Main.parseArgs( getArgs( id ) );
+        ParserResult result = Main.parseArgs( getArgs( mode, id ) );
         return new SocketService( result );
     }
 
     @Test
     public void perfectLinkTest()
     {
-        SocketService s1 = getService( 1 );
-        SocketService s2 = getService( 2 );
-//        SocketService s3 = getService( 3 );
-//        SocketService s4 = getService( 4 );
-//        SocketService s5 = getService( 5 );
+        String mode = "hard";
+        SocketService s1 = getService( mode, 1 );
+        SocketService s2 = getService( mode, 2 );
+        SocketService s3 = getService( mode, 3 );
+        SocketService s4 = getService( mode, 4 );
+        SocketService s5 = getService( mode, 5 );
 
         serverTest( s1, Logger.Color.BLUE );
         serverTest( s2, Logger.Color.RED );
-//        serverTest( s3, Logger.Color.GREEN );
-//        serverTest( s4, Logger.Color.BLUE );
-//        serverTest( s5, Logger.Color.RED );
+        serverTest( s3, Logger.Color.GREEN );
+        serverTest( s4, Logger.Color.BLUE );
+        serverTest( s5, Logger.Color.RED );
 
         hold(60 * 60 * 1000);
     }

@@ -30,13 +30,14 @@ public class PacketParser
 
     public static DatagramPacket format( GroupedPacket p )
     {
-        int capacity = capacity( p.contents );
+        List<PacketContent> contents = p.getContents();
+        int capacity = capacity( contents );
         ByteBuffer buffer = ByteBuffer.allocate( capacity );
         buffer.put( SET_TAG );
         buffer.putInt( p.seq );
         buffer.putInt( p.src );
-        buffer.putInt( p.contents.size() );
-        for ( PacketContent c : p.contents )
+        buffer.putInt( contents.size() );
+        for ( PacketContent c : contents )
         {
             buffer.putChar( c.getType().getTag() );
             buffer.putInt( c.getRound() );

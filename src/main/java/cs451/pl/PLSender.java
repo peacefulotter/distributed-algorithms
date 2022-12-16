@@ -17,7 +17,6 @@ public abstract class PLSender extends SocketHandler
 
     protected final ConcurrentLinkedQueue<PacketContent> toBroadcast;
     protected final ConcurrentLinkedQueue<Pair<List<PacketContent>, Integer>> responseSend;
-    protected final ConcurrentLinkedQueue<GroupedPacket> schedulerSend;
     protected final ConcurrentSkipListSet<MiniPacket> pendingAck;
 
     protected PLReceiver receiver;
@@ -28,7 +27,6 @@ public abstract class PLSender extends SocketHandler
         this.timer = new Timer("Timer");
         this.toBroadcast = new ConcurrentLinkedQueue<>();
         this.responseSend = new ConcurrentLinkedQueue<>();
-        this.schedulerSend = new ConcurrentLinkedQueue<>();
         this.pendingAck = new ConcurrentSkipListSet<>();
     }
 
@@ -47,22 +45,19 @@ public abstract class PLSender extends SocketHandler
         this.responseSend.add( new Pair<>( c, dest ) );
     }
 
-    public void addSchedulerQueue( GroupedPacket p )
-    {
-        this.schedulerSend.add( p );
-    }
-
     public void addTimeoutTask( GroupedPacket p )
     {
+        Logger.log(service.id, "PLSender", "Adding " + p + " to scheduler");
+        final GroupedPacket scheduledPacket = new GroupedPacket( p );
         TimerTask task = new TimerTask() {
             public void run() {
-            if ( !service.closed.get() && pendingAck.contains( p.minify() ) )
-            {
-                Logger.log(  service.id, "Scheduler fired for " + p );
-                service.timeout.increase( p.dest );
-                addSchedulerQueue( p );
-            }
-            cancel();
+                if ( !service.closed.get() && pendingAck.contains( scheduledPacket.minify() ) )
+                {
+                    Logger.log(  service.id, "Scheduler fired for " + scheduledPacket );
+                    service.timeout.increase( scheduledPacket.dest );
+                    pp2pSend( scheduledPacket );
+                }
+                cancel();
             }
         };
         timer.schedule( task, service.timeout.get( p.dest ) );
@@ -73,7 +68,7 @@ public abstract class PLSender extends SocketHandler
         DatagramPacket dp = PacketParser.format( p );
         if ( !service.sendPacket( dp, p.dest ) )
             return;
-        Logger.log(service.id, "PLSender", p.minify());
+        Logger.log(service.id, "PLSender", "content size: " + p.contents.size() + " " + p.minify());
         pendingAck.add( p.minify() );
         addTimeoutTask( p );
     }

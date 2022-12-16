@@ -53,15 +53,17 @@ public class FileHandler
     /**
      * Writes the 'messages' list to the output file and clear the said list
      */
-    public void write()
+    public void write( int id )
     {
         try ( PrintWriter pw = new PrintWriter( new FileOutputStream( path, true ) ) )
         {
-            System.out.println("Writing messages " + messages);
+            Logger.log( id, "FileHandler", "Writing messages (" + messages.size() + ") : " + messages);
             for ( Set<Integer> line : messages )
             {
+                if ( line == null ) break;
                 StringJoiner sj = new StringJoiner( " " );
-                line.forEach( i -> sj.add( String.valueOf( i ) ) );
+                for ( Integer i : line )
+                    sj.add( String.valueOf( i ) );
                 pw.println( sj );
             }
         } catch ( IOException e )

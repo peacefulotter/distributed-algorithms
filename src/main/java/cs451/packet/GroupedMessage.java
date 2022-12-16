@@ -16,6 +16,11 @@ public class GroupedMessage
         this.contents = contents;
     }
 
+    public List<PacketContent> getContents()
+    {
+        return contents;
+    }
+
     @Override
     public boolean equals( Object o )
     {
@@ -44,7 +49,4 @@ public class GroupedMessage
             j.add( c.toString() );
         return base + j;
     }
-
-    public int getSeq() { return seq; }
-    public int getSrc() { return src; }
 }

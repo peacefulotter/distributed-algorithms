@@ -111,8 +111,8 @@ public class LATReceiver extends BEBReceiver
 
     public void onPacket( GroupedPacket p )
     {
-        Logger.log(service.id, "LATReceiver", p);
         int size = p.contents.size();
+        Logger.log(service.id, "LATReceiver", "contents size: " + size + " " + p);
 
         // Treat each content in the packet
         List<PacketContent> res = new ArrayList<>(size);
@@ -176,6 +176,7 @@ public class LATReceiver extends BEBReceiver
         Proposal accepted = accepted_value.get( round );
         accepted.addAll( proposed_value );
         accepted_value.put( round, accepted );
+        Logger.log(service.id, "LATReceiver round=" + round, "on NACK Proposal: new acc_value=" + accepted );
         return getNack( round, proposal_number, accepted );
     }
 

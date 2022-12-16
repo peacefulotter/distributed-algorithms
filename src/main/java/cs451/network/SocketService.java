@@ -112,7 +112,7 @@ public class SocketService
         if ( closed.get() ) return;
         Logger.log(  "SocketService", "Closing connection" );
         closed.set( true );
-        handler.write();
+        handler.write( id );
         socket.close();
     }
 }

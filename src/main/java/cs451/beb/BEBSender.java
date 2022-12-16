@@ -15,18 +15,20 @@ abstract public class BEBSender extends PLSender
 {
     public static final int MAX = 8;
 
+    private final List<Host> hosts;
     protected final AtomicInteger proposalsToSend;
 
     public BEBSender( SocketService service )
     {
         super( service );
+        this.hosts = service.getHosts();
         this.proposalsToSend = new AtomicInteger( MAX );
     }
 
     protected void bebBroadcast( int seq, List<PacketContent> contents )
     {
         Logger.log(service.id, "BEBSender", "Broadcasting msg: " + contents);
-        for ( Host dest : service.getHosts() )
+        for ( Host dest : hosts )
             pp2pSend( seq, contents, dest.getId() );
     }
 
@@ -39,14 +41,6 @@ abstract public class BEBSender extends PLSender
         Logger.log( service.id,"BEBSender","responseSend - Sent packet " + p );
         pp2pSend( seq, p.getA(), p.getB() );
         return seq + 1;
-    }
-
-    private void sendScheduler()
-    {
-        GroupedPacket p = schedulerSend.poll();
-        if ( p == null ) return;
-        Logger.log( service.id, "BEBSender", "SchedulerQueue - Sending " + p.minify() );
-        pp2pSend( p );
     }
 
     private int formContents( List<PacketContent> contents, Queue<PacketContent> q, int max )
@@ -64,7 +58,6 @@ abstract public class BEBSender extends PLSender
         while ( !service.closed.get() )
         {
             seq = sendOne(seq);
-            sendScheduler();
 
             List<PacketContent> contents = new ArrayList<>( MAX );
             if ( !toBroadcast.isEmpty() )
