@@ -58,7 +58,7 @@ public class LATService
 
     public void decide(LATSender sender, LATReceiver receiver, Proposal decision )
     {
-        Logger.print(service.id, "LATService  round=" + round, "///// DECIDING apn=" + active_proposal_number.get() + " ////// " + decision );
+        Logger.log(service.id, "LATService  round=" + round, "///// DECIDING apn=" + active_proposal_number.get() + " ////// " + decision );
 
         // register decision
         service.registerProposal( round, decision );

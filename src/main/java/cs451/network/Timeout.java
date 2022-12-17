@@ -72,7 +72,7 @@ public class Timeout
         Handler h = handlers.get( id );
         int before = h.timeout.get();
         if ( h.increase() )
-            Logger.print( service_id, PREFIX, "(" + id + ") Increasing " + before + " -> " + h.timeout.get() );
+            Logger.log( service_id, PREFIX, "(" + id + ") Increasing " + before + " -> " + h.timeout.get() );
     }
 
     public void decrease( int id )
@@ -80,7 +80,7 @@ public class Timeout
         Handler h = handlers.get( id );
         int before = h.timeout.get();
         if ( h.decrease() )
-            Logger.print( service_id, PREFIX, "(" + id + ") Decreasing " + before + " -> " + h.timeout.get() );
+            Logger.log( service_id, PREFIX, "(" + id + ") Decreasing " + before + " -> " + h.timeout.get() );
     }
 
     public int get( int id )

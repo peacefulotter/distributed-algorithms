@@ -85,7 +85,7 @@ public abstract class PLSender extends SocketHandler
         if ( !pendingAck.remove( mp ) )
             return;
 
-        Logger.print(service.id,"PLSender", "Acknowledged " + mp );
+        Logger.log(service.id,"PLSender", "Acknowledged " + mp );
         service.timeout.decrease( mp.dest );
     }
 }

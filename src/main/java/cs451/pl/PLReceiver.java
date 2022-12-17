@@ -40,7 +40,7 @@ public class PLReceiver extends SocketHandler
 
     public boolean deliver( MiniPacket mp )
     {
-        Logger.print(service.id, "PLReceiver", "Delivering: " + mp);
+        Logger.log(service.id, "PLReceiver", "Delivering: " + mp);
         return delivered.add( mp );
     }
 

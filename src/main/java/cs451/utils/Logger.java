@@ -9,8 +9,8 @@ import java.util.Map;
 
 public class Logger
 {
-    private static final boolean ENABLED = true;
-    private static final boolean DEBUG_ENABLED = true;
+    private static final boolean ENABLED = false;
+    private static final boolean DEBUG_ENABLED = false;
     private static final Clock clock = new HighLevelClock();
     private static final Map<Integer, Color> colorMap = new HashMap<>();
 
@@ -75,7 +75,6 @@ public class Logger
     {
         return LocalTime.now(clock);
     }
-
 
     public static void log( Object o )
     {
