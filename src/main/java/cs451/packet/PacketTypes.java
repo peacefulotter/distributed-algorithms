@@ -1,35 +1,28 @@
 package cs451.packet;
 
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 public enum PacketTypes
 {
-    BROADCAST( 'b', (p, i) -> i + "" ),
-    DELIVER( 'd', (p, i) -> p.getSender() + " " + i ),
-    ACK( 'a', (p, i) -> "" );
-
-    private interface PacketLambda
-    {
-        String apply( Packet packet, int i );
-    }
+    LAT_PROP('p' ),
+    LAT_ACK('a' ),
+    LAT_NACK( 'n' );
 
     private final char tag;
-    private final PacketLambda lambda;
 
-    PacketTypes( char tag, PacketLambda lambda )
+    PacketTypes( char tag )
     {
         this.tag = tag;
-        this.lambda = lambda;
     }
 
-    public List<String> getFileLines( Packet packet )
+    public static PacketTypes parseType( char tag )
     {
-        return packet.getSeqRange()
-            .map( i -> tag + " " + lambda.apply( packet, i ) )
-            .collect( Collectors.toList() );
+        for ( PacketTypes type: values() )
+            if ( type.getTag() == tag )
+                return type;
+        return null;
     }
+
+    public char getTag() { return tag; }
 
     @Override
     public String toString()

@@ -1,74 +1,42 @@
 package PerfectLink;
 
-import cs451.Logger;
+import cs451.network.Pool;
 import cs451.Main;
 import cs451.parser.ParserResult;
-import cs451.perfectlink.Receiver;
-import cs451.perfectlink.Sender;
-import cs451.perfectlink.Server;
+import cs451.network.SocketService;
+import cs451.utils.Logger;
 import org.junit.jupiter.api.Test;
-
-import java.awt.*;
-import java.util.Arrays;
 
 class PerfectLinkTest
 {
     // ../template_java/build.sh
     // python3 tc.py
     // python3 stress.py -r ../template_java/run.sh -t perfect -l ./output -p 5 -m 250
+    // python3 stress.py -r ../template_java/run.sh -t fifo -l ./output -p 3 -m 25
+    // python3 stress.py -r ../template_java/run.sh -t fifo -l ./output -p 5 -m 500
+    // python3 validate_fifo.py --proc_num 5 --output ./output/
 
-    protected static void serverTest( Server server )
+    // python3 ./stress.py agreement -r ../template_java/run.sh -l ./output -p 3 -n 5 -v 10 -d 5
+
+    protected static void serverTest( SocketService service, Logger.Color color )
     {
+        Logger.addColor( service.id, color );
         new Thread( () -> {
-            Main.initSignalHandlers( server );
-            long t1 = System.nanoTime();
-            server.run();
-            long t2 = System.nanoTime();
-            long delta = (t2 - t1) / 1000000;
-            System.out.println(delta + "ms");
+            Main.initSignalHandlers( service );
+            Pool pool = Main.invokeLATServer( service );
+            pool.start();
         } ).start();
     }
 
-    protected static String[] getArgs( int id )
+    protected static String[] getArgs( String mode, int id )
     {
         return new String[] {
             "--id", id + "",
             "--hosts", "../example/hosts",
             "--output", "../example/output/" + id + ".output",
-            "../example/configs/perfect-links.config"
+            // "../example/configs/lattice-agreement-" + id + ".config"
+            "../example/configs/" + mode + "/custom-" + id + ".config"
         };
-    }
-
-    protected static Server sender( int id, Logger.Color color )
-    {
-        ParserResult r = Main.parseArgs( getArgs( id ) );
-        Server s = new Sender( r.host, r.dest, r.output, r.config );
-        s.setColor( color );
-        return s;
-    }
-
-    protected static Server receiver( int id )
-    {
-        ParserResult r = Main.parseArgs( getArgs( id ) );
-        Server s = new Receiver( r.host, r.output );
-        s.setColor( Logger.Color.RED );
-        return s;
-    }
-
-    public static Server droppingSender( int id, Logger.Color color )
-    {
-        ParserResult r = Main.parseArgs( getArgs( id ) );
-        Server s = new DroppingSender( r );
-        s.setColor( color );
-        return s;
-    }
-
-    protected static Server droppingReceiver( int id )
-    {
-        ParserResult r = Main.parseArgs( getArgs( id ) );
-        Server s = new DroppingReceiver( r );
-        s.setColor( Logger.Color.RED );
-        return s;
     }
 
     protected static void hold( long time )
@@ -82,58 +50,27 @@ class PerfectLinkTest
         }
     }
 
+    protected SocketService getService( String mode, int id )
+    {
+        ParserResult result = Main.parseArgs( getArgs( mode, id ) );
+        return new SocketService( result );
+    }
+
     @Test
     public void perfectLinkTest()
     {
-        Server s1 = sender( 1, Logger.Color.BLUE );
-        Server s2 = receiver( 2 );
-        Server s3 = sender(3, Logger.Color.GREEN );
+        String mode = "hard";
+        SocketService s1 = getService( mode, 1 );
+        SocketService s2 = getService( mode, 2 );
+        SocketService s3 = getService( mode, 3 );
+        SocketService s4 = getService( mode, 4 );
+        SocketService s5 = getService( mode, 5 );
 
-        serverTest( s1 );
-        serverTest( s2 );
-        serverTest( s3 );
-
-        hold(60 * 60 * 1000);
-    }
-
-    @Test
-    public void droppingReceiverTest()
-    {
-        Server s1 = sender( 1, Logger.Color.BLUE );
-        Server s2 = droppingReceiver( 2 );
-        Server s3 = sender(3, Logger.Color.GREEN );
-
-        serverTest( s1 );
-        serverTest( s2 );
-        serverTest( s3 );
-
-        hold(60 * 60 * 1000);
-    }
-
-    @Test
-    public void droppingSenderTest()
-    {
-        Server s1 = droppingSender( 1, Logger.Color.BLUE );
-        Server s2 = receiver( 2 );
-        Server s3 = droppingSender(3, Logger.Color.GREEN );
-
-        serverTest( s1 );
-        serverTest( s2 );
-        serverTest( s3 );
-
-        hold(60 * 60 * 1000);
-    }
-
-    @Test
-    public void droppingSenderReceiverTest()
-    {
-        Server s1 = droppingSender( 1, Logger.Color.BLUE );
-        Server s2 = droppingReceiver( 2 );
-        Server s3 = droppingSender(3, Logger.Color.GREEN );
-
-        serverTest( s1 );
-        serverTest( s2 );
-        serverTest( s3 );
+        serverTest( s1, Logger.Color.BLUE );
+        // serverTest( s2, Logger.Color.RED );
+        serverTest( s3, Logger.Color.GREEN );
+        // serverTest( s4, Logger.Color.BLUE );
+        serverTest( s5, Logger.Color.RED );
 
         hold(60 * 60 * 1000);
     }

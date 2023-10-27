@@ -10,7 +10,7 @@ import java.util.Map;
 public class Host {
 
     private static final String IP_START_REGEX = "/";
-    public static final Map<Integer, Integer> portToId = new HashMap<>();
+    public static final Map<Integer, Host> findById = new HashMap<>();
 
     private final int id, port;
     private final String ip;
@@ -53,11 +53,12 @@ public class Host {
                 throw new Exception( "Port in the hosts file must be a number!" );
             }
         }
-
-        portToId.put( port, id );
-
-        return new Host(id, port, ip);
+        Host host = new Host(id, port, ip);
+        findById.put( id, host );
+        return host;
     }
+
+    public static Host get(int id) { return findById.get( id ); }
 
     public int getId() {
         return id;

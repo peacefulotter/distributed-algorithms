@@ -1,20 +1,25 @@
 package cs451;
 
+import cs451.lat.LATReceiver;
+import cs451.lat.LATSender;
+import cs451.parser.LATConfig;
+import cs451.network.*;
 import cs451.parser.HostsParser;
 import cs451.parser.Parser;
 import cs451.parser.ParserResult;
-import cs451.perfectlink.*;
+import cs451.pl.PLReceiver;
+import cs451.pl.PLSender;
 
 import java.util.List;
 
 public class Main {
 
-    public static void initSignalHandlers( Server server )
+    public static void initSignalHandlers( SocketService service )
     {
         Runtime.getRuntime().addShutdownHook( new Thread( () -> {
             //immediately stop network packet processing
             System.out.println("Immediately stopping network packet processing.");
-            server.terminate();
+            service.terminate();
         } ) );
     }
 
@@ -32,33 +37,29 @@ public class Main {
         Parser parser = new Parser(args);
         HostsParser hostsParser = parser.parse();
         List<Host> hosts = hostsParser.getHosts();
-        PLConfig config = new PLConfig( parser.config() );
+        LATConfig config = new LATConfig( parser.config() );
 
-        printDetails( parser );
+        // printDetails( parser );
 
         int id = parser.myId();
         String output = parser.output();
         Host host = hosts.get( id - 1 );
-        Host dest = hosts.get( config.getI() - 1 );
-
-        ParserResult res = new ParserResult( host, dest, output, config );
-        System.out.println(res);
-
-        return res;
+        return new ParserResult( host, hosts, output, config );
     }
 
-    public static Server invokeServer( ParserResult result )
+    public static Pool invokeLATServer( SocketService service )
     {
-        return result.host.getId() == result.dest.getId()
-            ? new Receiver( result.host, result.output )
-            : new Sender( result.host, result.dest, result.output, result.config );
+        PLSender sender = new LATSender( service );
+        PLReceiver receiver = new LATReceiver( service );
+        return Pool.getPool( sender, receiver );
     }
 
     public static void main(String[] args)
     {
         ParserResult result = parseArgs( args );
-        Server server = invokeServer( result );
-        initSignalHandlers( server );
-        server.run();
+        SocketService service = new SocketService( result );
+        Pool pool = invokeLATServer( service );
+        initSignalHandlers( service );
+        pool.start();
     }
 }

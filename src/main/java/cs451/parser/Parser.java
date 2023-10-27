@@ -1,13 +1,11 @@
 package cs451.parser;
 
-import cs451.Constants;
+import cs451.utils.Constants;
 
 public class Parser {
 
-    private String[] args;
-    private long pid;
+    private final String[] args;
     private IdParser idParser;
-    private HostsParser hostsParser;
     private OutputParser outputParser;
     private ConfigParser configParser;
 
@@ -17,10 +15,10 @@ public class Parser {
 
     public HostsParser parse()
     {
-        pid = ProcessHandle.current().pid();
+        // long pid = ProcessHandle.current().pid();
 
         idParser = new IdParser();
-        hostsParser = new HostsParser();
+        HostsParser hostsParser = new HostsParser();
         outputParser = new OutputParser();
         configParser = new ConfigParser();
 
